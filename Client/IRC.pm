@@ -369,7 +369,7 @@ foreach my $server (get_names_by_type('irc')) {
         irc_invite => sub {
           my ($kernel, $who, $where) = @_[KERNEL, ARG0, ARG1];
           $where =~ s/^#//;
-          if ( $conf{inviteany} &&
+          if ( $conf{join_cfg_only} &&
                1 > grep $_ eq $where, @{$conf{channel}} ) {
             print "$who invited me to $where, but i'm not allowed\n";
           }
