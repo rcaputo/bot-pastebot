@@ -240,7 +240,7 @@ sub httpd_session_got_query {
 
       if ($channel and $channel =~ /^\#/) {
         $kernel->post( "irc_client_$heap->{my_isrv}" => announce =>
-                       $channel => "$nick pasted $summary at $paste_link"
+                       $channel => "$nick pasted \"$summary\" at $paste_link"
                      );
       }
 
