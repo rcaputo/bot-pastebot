@@ -1,0 +1,54 @@
+$Id$
+
+-----
+About
+-----
+
+To do.
+
+------------
+Requirements
+------------
+
+Perl 5.005, but Perl 5.6.1 or newer is recommended.
+
+You'll need the following Perl modules.
+
+  Filter::Util::Call
+  Time::HiRes
+  POE
+  POE::Component::IRC
+  HTTP::Request
+  HTTP::Response
+  HTTP::Status
+  URI
+
+----------
+Setting up
+----------
+
+Edit pastebot.conf.
+Run pastebot.perl.
+
+To do.
+
+------
+Errors
+------
+
+* IRC client (foo): socket error occurred: Can't assign requested address
+
+  The most likely cause of this is an unknown host name, either for a
+  local machine or a remote IRC server.  If you have multiple servers
+  specified, the bot will try the next server in approximately one
+  minute.
+
+-------
+Support
+-------
+
+To do.
+
+---
+End
+---

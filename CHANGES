@@ -1,0 +1,61 @@
+$Id$
+
+----------
+2002-05-07
+----------
+
+Schuyler patched a "nick" field into the paste form and IRC
+announcement.
+
+Rocco added a "summary" field for the paste form and IRC announcement.
+
+TonyC added multiple features:
+
+  An "ignore" command on the bot side to prevent it from announcing
+  paste from certain addresses to certain channels.  Also a command to
+  list ignored addresses.
+
+  A "delete" command so ops can delete sensitive or offensive
+  information.
+
+  The "(none)" channel, so that pasted things aren't announced
+  anywhere.
+
+Rocco revised nopaste.text and made it into a proper TODO for the
+pending SourceForge import.
+
+Rocco created a skeleton README file.
+
+Rocco documented the options in pastebot.conf.
+
+----------
+2002-04-15
+----------
+
+Rocco applied Tony Cook's patch to validate the channel field in the
+paste input form.
+
+----------
+2002-03-25
+----------
+
+Rocco applied Tony Cook's patch to prevent the bot's keep-alive timer
+from triggering servers' "ping flood" detection.
+
+Rocco applied Tony Cook's patch to allow the bot to connect via a
+particular local address.  This adds the localaddr configuration
+option in "irc" sections.
+
+Rocco patched Server/Web to generate a channel listing from the
+channels provided in "irc" sections.  However, he did not address the
+bot's lack of proper multi-network support.
+
+Rocco applied Tony Cook's patch to support older versions of Perl.
+Use the -w flag instead of the warnings pragma.
+
+Rocco applied Tony Cook's patch to display paste without line numbers,
+making it suitable for adding to editor buffers and stuff.
+
+------
+Begin.
+------

@@ -1,0 +1,227 @@
+$Id$
+
+----------------------------
+Nickname dispute resolution.
+----------------------------
+
+If the chosen nickname is taken, pick another.  When the desired
+nickname becomes available again, reclaim it.
+
+-----------------
+Time-limited keys
+-----------------
+
+Pastebot, like every other tool, has the ability to be abused.  Adding
+time-limited keys for paste functions would probably reduce this
+potential at a cost of less convenience.
+
+*** Get a key from the bot.
+
+User sends:
+
+  /msg [bot] getkey [channel]
+  /msg [bot] getkey [nick]
+
+Bot returns:
+
+  /msg [user] You may paste to [channel] via http://host/paste/[key]
+  /msg [user] You may paste to [nick] via http://host/paste/[key]
+
+The [key] will be available for some time period, perhaps an hour,
+before it expires.  [nick] or [channel] ops would be able to expire
+the key early and possibly block the user from acquiring new keys in
+the future.
+
+*** Give someone else a key.
+
+Public responses to a paste in progress might trigger key generation.
+Possible public messages to look for:
+
+  [nick]: no paste!
+  [nick]: don't paste!
+  [nick]: no pasting!
+  etc.
+
+The bot would generate a new key and /msg it to [nick]:
+
+  /msg [nick] You may paste to [channel] via http://host/paste/[key]
+
+Whoever publicly admonished the paster would receive an
+acknowledgment:
+
+  /msg [admonisher] I sent a paste key to [nick].
+
+*** Private proactive paste prevention.
+
+When someone has expressed the intention of pasting on-channel,
+another user can trigger pastebot to send them a key.  This explains
+the bot's purpose and creates the paste key all at once.
+
+Someone's joined the channel and said:
+
+  Can I show you some poetry I wrote?
+
+Someone on-channel catches this and rather than explain the bot types:
+
+  /msg [bot] meet [nick]
+
+The bot then sends [nick] this private message:
+
+  /msg [nick] [requester] has requested that you paste via the web.
+  You may paste to [channel] by visiting http://host/paste/[key] ...
+  To avoid future problems, /msg [bot] help
+
+*** Automatic key generation.
+
+The bot could incorporate flood detection.  On detecting flood, it can
+automatically generate a key and send it to the offending person.
+Optionally, it can kick the flooder or set them -v.
+
+Channel ops would be upset if it did this to them, so detect and
+ignore +o people. :)
+
+*** Disallow anonymous paste.
+
+Remove the personal ID fields from the web form.  Fill them in based
+on the channel and nick requesting keys through IRC.  This is a small
+convenience as a side effect of the larger inconvenience of using
+one-time keys.
+
+----------------------------
+Pretty up the web interface.
+----------------------------
+
+Replace the main page with a nice title/credits page.
+
+Add a browsable index of public (to-channel) pastes.  This could be
+construed as a security hole.
+
+Add syntax highlighting.  This assumes a particular kind of paste,
+though.  Maybe also add a field for "language type" and highlight
+syntax (or not) accordingly.
+
+Code beautification.  Some people post really nasty stuff.  Have the
+option to make it prettier.
+
+-------------
+Web accounts.
+-------------
+
+Have persistent accounts with information about each user's viewing
+preferences.  Per-viewer settings might include:
+
+Tab widths, although it may be better if the paster could specify
+this.
+
+Admin flags, so users can maintain the bot via the web.
+
+----------
+Ban lists.
+----------
+
+Abusive people exist.  Have the ability to ban people from using the
+bot through a number of tried-and-true methods.
+
+  /msg [bot] ban [nick]
+  /msg [bot] ban [*!*@* mask]
+
+  /msg [bot] unban [nick]
+  /msg [bot] unban [*!*@* mask]
+
+  /msg [bot] bans [*!*@* mask]
+
+Also perhaps add a web interface to the bans list.
+
+-----------
+Admin list.
+-----------
+
+Keep a database of bot admins separate from channel ops.  This will be
+difficult.
+
+-------------------
+Paste via DCC chat.
+-------------------
+
+Some people don't have web access, or have really bad browsers, or are
+too lazy to be bothered, or just prefer IRC over the web.  Provide a
+way for them to DCC chat the bot and paste into it that way.
+
+User:
+
+  /dcc [bot] chat
+
+The bot accepts the chat request.  The user pastes their paste into
+the query, then closes the chat to save it.
+
+  /dcc [bot] close
+
+The bot posts the paste on the web.
+
+*** Reverse DCC chat.
+
+Reverse DCC chat, like eggdrops do, will be needed for people behind
+firewalls.
+
+  /ctcp [bot] chat
+
+Then the bot sends a DCC chat request to the user.  The user accepts,
+and everything else happens as outlined above.
+
+*** Paste shell over DCC chat.
+
+Add a miniature paste editor so people can specify channel, summary,
+and other information for the paste.  More importantly, let users
+paste multiple things per chat session.
+
+  To: [channel or nick]
+  Subject: A nice subject for the web listing/messaging.
+
+  paste
+  paste
+  paste
+
+------------------
+Internal features.
+------------------
+
+These features are not necessarily visible to end users, but they'll
+make visible changes easier.
+
+*** User/mask tracking per channel.
+
+Have the bot grab a list of /names when it joins a channel.  It then
+watches as users join, part, quit, or are kicked and manages that
+list.
+
+*** Paste expiration.
+
+Have pastebot manage its database, purging old paste after it has not
+been viewed for 24 hours.
+
+*** Make databases persistent.
+
+The ban list needs to be saved to disk, otherwise abusive people will
+have many opportunities to harass the bot and channels it's on.
+
+Persistent key database.  While paste keys will be temporary, it's
+important that they expire properly.  Restarting the bot should not
+wipe out all the unexpired keys.
+
+Persistent paste database.  Likewise, restarting the bot should not
+destroy unexpired pastes.
+
+User state tracking.  Probably with POE::Component::UserBase.
+
+Replace the web server code with POE::Component::Server::HTTP.
+
+At one point someone suggested POE::Component::IRCbot.  Find out if
+that's ready, and possibly use it in place of pastebot's code.
+
+Background name/address resolution.  Replace numeric addresses with
+their proper machine names, using POE::Component::Client::DNS so
+things don't halt during the process.
+
+----
+End.
+----
