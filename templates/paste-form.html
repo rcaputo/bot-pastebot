@@ -11,7 +11,7 @@
       choice along with an URL where people can retrieve it.
     </p>
     <p>
-    <form method='post' action='/paste' enctype='application/x-www-from-urlencoded'>
+    <form method='post' action='/paste' enctype='application/x-www-from-urlencoded' name="pasteForm">
       <p>
         Channel: <select name='channel'>[% value name='channels' %]</select>
         &nbsp; &nbsp;
@@ -36,5 +36,16 @@
         <!-- $Id$ -->
       </p>
     </form>
+
+    <!-- Automatically put the clipboard contents into the paste field. -->
+    <script language="jscript">
+    onload=function () {
+      try {
+        document.pasteForm.paste.value=clipboardData.getData("Text") || "";
+      }
+      catch (oErr) {}
+    }
+    </script>
+
   </body>
 </html>
