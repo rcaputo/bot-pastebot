@@ -8,9 +8,11 @@
 web_server
 
         # The code name for this web server.  It is used internally to
-        # associate IRC clients and web servers.
+        # associate IRC clients and web servers.  It's also used in
+	# page titles and to announce which network someone is pasting
+        # to.
 
-        name      global
+        name      poenet
 
         # The local interface to bind on.  It's not uncommon for this
         # address to be different than what the outside world knows.
