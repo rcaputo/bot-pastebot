@@ -286,7 +286,7 @@ foreach my $server (get_names_by_type('irc')) {
       _default => sub {
         my ($state, $event, $args, $heap) = @_[STATE, ARG0, ARG1, HEAP];
         $args ||= [ ];
-        print "default $state = $event @$args\n";
+        print "default $state = $event (@$args)\n";
         $heap->{seen_traffic} = 1;
         return 0;
       },
