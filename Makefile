@@ -83,7 +83,7 @@ install-store:
 install-lib: install-store
 	$(INSTALL) $(INSTALL_DATA) -d $(DATADIR)
 	if [ ! -d $(DATADIR) ]; then exit 1; fi
-	tar $(TAR_OPT_EX) -cf - * | (cd $(DATADIR); tar -xf -) && \
+	tar $(TAR_OPT_EX) -cf - * | (cd $(DATADIR); tar -xf -)
 
 install-bin: 
 	$(INSTALL) $(INSTALL_DATA) -d $(BINDIR)
