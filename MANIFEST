@@ -1,6 +1,5 @@
 COPYRIGHT
 Client/IRC.pm
-Data/SQLite.pm
 MANIFEST
 MANIFEST.SKIP
 Makefile
