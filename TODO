@@ -1,5 +1,64 @@
 $Id$
 
+------------
+Yaakov Ideas
+------------
+
+Ideas while discussing features with Yaakov.
+
+Move directly from the paste form to the "fetch" page.  Discard the
+answer page.
+
+  Requires the direct URL to be placed on the "fetch" page.
+
+Allow channels to be embedded in the URL.  This is a simple form of
+virtual hosting.  More complex forms are also possible.
+
+  Done properly, each channel might have its own database.
+
+Allow per-channel configurations, especially with the templates used
+to render pastes.
+
+  Channel -> template -> HTML
+
+  Save the channel in the paste record.  This simplifies lookups to
+  the point where you don't need to include the channel.
+
+  Paste Number -> record -> channel -> template -> HTML
+
+Allow channel aliases, /js/ instead of /#javascript/, etc.
+
+If the channel is specified in the paste request, we can match it
+against the paste number.  If they don't match, we can 404 it.  In
+other words, don't show pastes from other channels.  Some other form
+of vhosting might be more appropriate, such as using multiple ports or
+watching the Host header.
+
+Have the bot respond to permutations of "no paste" by presenting its
+URL.  Also, the devoice- (or kick-) on-flood.
+
+Perform bans, modifications based on paste number, not IP address.
+That is, the paster's address is opaque to users, ops, but they can
+still prevent people from abusing the system.
+
+  No plan of action is assigned to this task.
+
+Plan of action.
+
+  1. Store the channel with the paste record.  Already done.
+  2. Move the "fetch paste" code to a subroutine.
+     Call it from the "fetch paste" URL trigger and from the end of
+     the "store paste" URL trigger.  This replaces the
+     template-answer.html already there.
+  3. Channel-based template lookup.
+     Hash the network and channel names into a path.
+     Attempt to read the template from there.
+     If failure, read the template from a default location.
+     Continue with the rendering as usual.
+  4. Create public message triggers for variations of "no paste".
+     Build an URL from the %conf records associated with the network
+     and channel where the bot heard the trigger.
+
 ----------------------------
 Nickname dispute resolution.
 ----------------------------
