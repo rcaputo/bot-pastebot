@@ -40,6 +40,12 @@ web_server
 
 	# proxy 127.0.0.1
 
+        # (optional) name to advertise pastes as.  Use when behind a
+        # proxy to hide the internal host/port details.  Should agree
+        # with an iname value for an IRC client, below.
+
+        #iname http://poe.perl.org:8888/
+
 # Define an IRC client.  Each "irc" section defines another client
 # that pastebot uses to connect to a network.  Each client may listen
 # on as many channels as its server allows.
