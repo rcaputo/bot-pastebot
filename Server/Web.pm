@@ -138,15 +138,28 @@ sub httpd_session_got_query {
     if (defined $content->{paste} and length $content->{paste}) {
       my $channel = $content->{channel};
       defined $channel or $channel = "";
+      $channel =~ tr[\x00-\x1F\x7F][]d;
 
       my $error = "";
-      if ($channel) {
+      if (length $channel) {
         # See if it matches.
         if (is_ignored($heap->{my_isrv}, $channel, $heap->{remote_addr})) {
           $error =
-            ( "<p><b>" .
+            ( "<p><b><font size='+1' color='#800000'>" .
               "Your IP address has been blocked from pasting to $channel." .
-              "</b></p>"
+              "</font></b></p>"
+            );
+          $channel = "";
+        }
+      }
+
+      # Goes as a separate block.
+      if (length $channel) {
+        unless (grep { "\#$_" eq $channel } @{$heap->{my_chans}}) {
+          $error =
+            ( "<p><b><font size='+1' color='#800000'>" .
+              "The channel you pasted to is not known." .
+              "</font></b></p>"
             );
           $channel = "";
         }
@@ -154,6 +167,7 @@ sub httpd_session_got_query {
 
       my $nick = $content->{nick};
       $nick = "" unless defined $nick;
+      $nick =~ tr[\x00-\x1F\x7F][ ]s;
       $nick =~ s/\s+/ /g;
       $nick =~ s/^\s+//;
       $nick =~ s/\s+$//;
@@ -172,6 +186,7 @@ sub httpd_session_got_query {
 
       my $summary = $content->{summary};
       $summary = "" unless defined $summary;
+      $summary =~ tr[\x00-\x1F\x7F][ ]s;
       $summary =~ s/\s+/ /g;
       $summary =~ s/^\s+//;
       $summary =~ s/\s+$//;
