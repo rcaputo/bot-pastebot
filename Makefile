@@ -1,4 +1,4 @@
-VERSION=`date +%Y%m%d`
+VERSION=$(shell date +%Y%m%d-%H%M%S)
 DISTNAME=pastebot-$(VERSION)
 DISTBUILD=$(DISTNAME)
 DISTTAR=$(DISTNAME).tar
