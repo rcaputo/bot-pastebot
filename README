@@ -27,7 +27,8 @@ You'll need the following Perl modules.
 Setting up
 ----------
 
-Edit pastebot.conf.
+Rename pastebot.conf-dist to pastebot.conf (unless you have one already).
+Customize your new/existing pastebot.conf.
 Run pastebot.perl.
 
 To do.
