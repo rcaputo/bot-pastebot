@@ -71,14 +71,14 @@ sub httpd_session_started {
   $heap->{remote_addr} = inet_ntoa($remote_address);
   $heap->{remote_port} = $remote_port;
 
-  $heap->{wheel} = new POE::Wheel::ReadWrite
-    ( Handle       => $socket,
-      Driver       => new POE::Driver::SysRW,
-      Filter       => new POE::Filter::HTTPD,
-      InputEvent   => 'got_query',
-      FlushedEvent => 'got_flush',
-      ErrorEvent   => 'got_error',
-    );
+  $heap->{wheel} = new POE::Wheel::ReadWrite(
+    Handle       => $socket,
+    Driver       => new POE::Driver::SysRW,
+    Filter       => new POE::Filter::HTTPD,
+    InputEvent   => 'got_query',
+    FlushedEvent => 'got_flush',
+    ErrorEvent   => 'got_error',
+  );
 }
 
 # An HTTPD response has flushed.  Stop the session.
@@ -90,9 +90,10 @@ sub httpd_session_flushed {
 sub httpd_session_got_error {
   my ($session, $heap, $operation, $errnum, $errstr) =
     @_[SESSION, HEAP, ARG0, ARG1, ARG2];
-  warn( "connection session ", $session->ID,
-        " got $operation error $errnum: $errstr\n"
-      );
+  warn(
+    "connection session ", $session->ID,
+    " got $operation error $errnum: $errstr\n"
+  );
   delete $heap->{wheel};
 }
 
@@ -124,14 +125,13 @@ sub httpd_session_got_query {
 
   my $url = $request->url() . '';
 
-  # strip trailing / to prevent odd page errors
-  $url =~ s,//+$,/,;
+  # strip multiple // to prevent errors
+  $url =~ s,//+,/,;
 
   ### Fetch the highlighted style sheet.
 
   if ($url eq '/style') {
-    my $response =
-      static_response( "templates/highlights.css", { } );
+    my $response = static_response( "templates/highlights.css", { } );
     $heap->{wheel}->put( $response );
     return;
   }
@@ -197,31 +197,24 @@ sub httpd_session_got_query {
 
       my $remote_addr = $heap->{remote_addr};
       if ($heap->{my_proxy} && $remote_addr eq $heap->{my_proxy}) {
-	# apache sets the X-Forwarded-For header to a list of the 
-	# IP addresses that were forwarded from/to
-	my $forwarded = $request->headers->header('X-Forwarded-For');
-	if ($forwarded) {
-	  ($remote_addr) = split ',', $forwarded;
-	}
-	# else must be local
-      }
-
-      if (defined $heap->{my_iname}) {
+        # apache sets the X-Forwarded-For header to a list of the
+        # IP addresses that were forwarded from/to
         my $forwarded = $request->headers->header('X-Forwarded-For');
         if ($forwarded) {
-          ($heap->{remote_addr}) = split ',', $forwarded;
+          ($remote_addr) = $forwarded =~ /([^,\s]+)$/;
         }
+        # else must be local?
       }
 
       my $error = "";
       if (length $channel) {
         # See if it matches.
         if (is_ignored($heap->{my_isrv}, $channel, $remote_addr)) {
-          $error =
-            ( "<p><b><font size='+1' color='#800000'>" .
-              "Your IP address has been blocked from pasting to $channel." .
-              "</font></b></p>"
-            );
+          $error = (
+            "<p><b><font size='+1' color='#800000'>" .
+            "Your IP address has been blocked from pasting to $channel." .
+            "</font></b></p>"
+          );
           $channel = "";
         }
       }
@@ -229,11 +222,11 @@ sub httpd_session_got_query {
       # Goes as a separate block.
       if (length $channel) {
         unless (grep $_ eq $channel, channels($heap->{my_isrv})) {
-          $error =
-            ( "<p><b><font size='+1' color='#800000'>" .
-              "I'm not on $channel." .
-              "</font></b></p>"
-            );
+          $error = (
+            "<p><b><font size='+1' color='#800000'>" .
+            "I'm not on $channel." .
+            "</font></b></p>"
+          );
           $channel = "";
         }
       }
@@ -248,7 +241,8 @@ sub httpd_session_got_query {
 
       if (length $nick) {
         $nick = qq("$nick");
-      } else {
+      }
+      else {
         $nick = "Someone";
       }
 
@@ -279,35 +273,53 @@ sub httpd_session_got_query {
       $summary = "something" unless length $summary;
       my $html_summary = html_encode($summary);
 
-      my $id = store_paste( $nick, $html_summary, $paste,
-                            $heap->{my_isrv}, $channel, $remote_addr
-                          );
+      my $id = store_paste(
+        $nick, $html_summary, $paste,
+        $heap->{my_isrv}, $channel, $remote_addr
+      );
       my $paste_link;
       if (defined $heap->{my_iname}) {
-        $paste_link = $heap->{my_iname} . 
-          (($heap->{my_iname} =~ m,/$,) ? $id : "/$id");
-      } else {
+        $paste_link = (
+          $heap->{my_iname} .
+          (
+            ($heap->{my_iname} =~ m,/$,)
+            ? $id
+            : "/$id"
+          )
+        );
+      }
+      else {
         $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
       }
 
+      # show number of lines in paste in channel announce
+      my $paste_lines = 0;
+      $paste_lines++ for $paste =~ m/^.*$/mg;
+
       $paste = fix_paste($paste, 0, 0, 0, 0);
 
-      my $response =
-        static_response( "templates/paste-answer.html",
-                         { paste_id   => $id,
-                           error      => $error,
-                           paste_link => $paste_link,
-                           nick       => $nick,
-                           summary    => $summary,
-                           paste      => $paste,
-                           footer     => PAGE_FOOTER,
-                         }
-                       );
+      my $response = static_response(
+        "templates/paste-answer.html",
+        { paste_id   => $id,
+          error      => $error,
+          paste_link => $paste_link,
+          nick       => $nick,
+          summary    => $summary,
+          paste      => $paste,
+          footer     => PAGE_FOOTER,
+        }
+      );
 
       if ($channel and $channel =~ /^\#/) {
-        $kernel->post( "irc_client_$heap->{my_isrv}" => announce =>
-                       $channel => "$nick pasted \"$summary\" at $paste_link"
-                     );
+        $kernel->post(
+          "irc_client_$heap->{my_isrv}" => announce =>
+          $channel,
+          "$nick pasted \"$summary\" ($paste_lines line" .
+          ($paste_lines == 1 ? '' : 's') . ") at $paste_link"
+        );
+      }
+      else {
+        warn "channel $channel was strange";
       }
 
       $heap->{wheel}->put( $response );
@@ -360,21 +372,21 @@ sub httpd_session_got_query {
         $response->content($paste);
       }
       else {
-        $response = static_response
-          ( "templates/paste-lookup.html",
-            { bot_name => $heap->{my_name},
-              paste_id => $num,
-              nick     => $nick,
-              summary  => $summary,
-              paste    => $paste,
-              footer   => PAGE_FOOTER,
-              tidy     => ( $tidy ? "checked" : "" ),
-              hl       => ( $hl   ? "checked" : "" ),
-              ln       => ( $ln   ? "checked" : "" ),
-              tx       => ( $tx   ? "checked" : "" ),
-              wr       => ( $wr   ? "checked" : "" ),
-            }
-          );
+        $response = static_response(
+          "templates/paste-lookup.html",
+          { bot_name => $heap->{my_name},
+            paste_id => $num,
+            nick     => $nick,
+            summary  => $summary,
+            paste    => $paste,
+            footer   => PAGE_FOOTER,
+            tidy     => ( $tidy ? "checked" : "" ),
+            hl       => ( $hl   ? "checked" : "" ),
+            ln       => ( $ln   ? "checked" : "" ),
+            tx       => ( $tx   ? "checked" : "" ),
+            wr       => ( $wr   ? "checked" : "" ),
+          }
+        );
         if ($store) {
           $response->push_header('Set-Cookie'=>cookie(tidy=>$tidy, $request));
           $response->push_header('Set-Cookie' => cookie(hl => $hl, $request));
@@ -401,42 +413,41 @@ sub httpd_session_got_query {
 
   ### Root page.
 
-  if ($url =~ m,^/(\w+)?,) {
-
-    # Dynamically build the channel options from the configuration
-    # file's list.
-
-    my @tmpchans = channels($heap->{my_isrv});
-    my @channels;
+  # 2003-12-22 - RC - Added _ and - as legal characters for channel
+  # names.  What else?
+  if ($url =~ m,^/([\_\-\w]+)?,) {
 
     # set default channel from request URL, if possible
     my $prefchan = $1;
-    if ($prefchan) {
-      $prefchan =~ s/^/#/;
-      push @channels, grep { $_ eq $prefchan } @tmpchans;
-      push @channels, grep { $_ ne $prefchan } @tmpchans;
+    if (defined $prefchan) {
+      $prefchan =~ s/^#*/#/;
     }
     else {
-      @channels = @tmpchans;
+      $prefchan = '';
     }
 
-    if (@channels) {
-      @channels = sort @channels;
-      @channels = map { "<option value='$_'>$_" } 
-	map html_encode($_), @channels;
-      $channels[0] =~ s/\'\>/\' selected="selected">/ if @channels == 1;
-    }
-    unshift(@channels, "<option value=''>(none)");
+    # Dynamically build the channel options from the configuration
+    # file's list.
+    my @channels = channels($heap->{my_isrv});
+    unshift @channels, '';
+
+    @channels = map {
+         qq(<option value="$_")
+       . ($_ eq $prefchan ? ' selected' : '')
+       . '>'
+       . ($_ eq '' ? '(none)' : $_)
+       . '</option>'
+    } sort @channels;
 
     # Build content.
 
-    my $response =
-      static_response( "templates/paste-form.html",
-                       { bot_name => $heap->{my_name},
-                         channels => "@channels",
-                         footer   => PAGE_FOOTER,
-                       }
-                     );
+    my $response = static_response(
+      "templates/paste-form.html",
+      { bot_name => $heap->{my_name},
+        channels => "@channels",
+        footer   => PAGE_FOOTER,
+      }
+    );
     $heap->{wheel}->put($response);
     return;
   }
@@ -451,64 +462,64 @@ sub httpd_session_got_query {
 
   local $^W = 0;
 
-  $response->content
-    ( "<html><head><title>Strange Request Dump</title></head>" .
-      "<body>" .
-      "<p>" .
-      "Your request was strange.  " .
-      "Here is everything I could figure out about it:" .
-      "</p>" .
-      "<table border=1>" .
+  $response->content(
+    "<html><head><title>Strange Request Dump</title></head>" .
+    "<body>" .
+    "<p>" .
+    "Your request was strange.  " .
+    "Here is everything I could figure out about it:" .
+    "</p>" .
+    "<table border=1>" .
 
-      {% table_method authorization             %} .
-      {% table_method authorization_basic       %} .
-      {% table_method content_encoding          %} .
-      {% table_method content_language          %} .
-      {% table_method content_length            %} .
-      {% table_method content_type              %} .
-      {% table_method content                   %} .
-      {% table_method date                      %} .
-      {% table_method expires                   %} .
-      {% table_method from                      %} .
-      {% table_method if_modified_since         %} .
-      {% table_method if_unmodified_since       %} .
-      {% table_method last_modified             %} .
-      {% table_method method                    %} .
-      {% table_method protocol                  %} .
-      {% table_method proxy_authorization       %} .
-      {% table_method proxy_authorization_basic %} .
-      {% table_method referer                   %} .
-      {% table_method server                    %} .
-      {% table_method title                     %} .
-      {% table_method url                       %} .
-      {% table_method user_agent                %} .
-      {% table_method www_authenticate          %} .
+    {% table_method authorization             %} .
+    {% table_method authorization_basic       %} .
+    {% table_method content_encoding          %} .
+    {% table_method content_language          %} .
+    {% table_method content_length            %} .
+    {% table_method content_type              %} .
+    {% table_method content                   %} .
+    {% table_method date                      %} .
+    {% table_method expires                   %} .
+    {% table_method from                      %} .
+    {% table_method if_modified_since         %} .
+    {% table_method if_unmodified_since       %} .
+    {% table_method last_modified             %} .
+    {% table_method method                    %} .
+    {% table_method protocol                  %} .
+    {% table_method proxy_authorization       %} .
+    {% table_method proxy_authorization_basic %} .
+    {% table_method referer                   %} .
+    {% table_method server                    %} .
+    {% table_method title                     %} .
+    {% table_method url                       %} .
+    {% table_method user_agent                %} .
+    {% table_method www_authenticate          %} .
 
-      {% table_header Accept     %} .
-      {% table_header Connection %} .
-      {% table_header Host       %} .
+    {% table_header Accept     %} .
+    {% table_header Connection %} .
+    {% table_header Host       %} .
 
-      {% table_header username  %} .
-      {% table_header opaque    %} .
-      {% table_header stale     %} .
-      {% table_header algorithm %} .
-      {% table_header realm     %} .
-      {% table_header uri       %} .
-      {% table_header qop       %} .
-      {% table_header auth      %} .
-      {% table_header nonce     %} .
-      {% table_header cnonce    %} .
-      {% table_header nc        %} .
-      {% table_header response  %} .
+    {% table_header username  %} .
+    {% table_header opaque    %} .
+    {% table_header stale     %} .
+    {% table_header algorithm %} .
+    {% table_header realm     %} .
+    {% table_header uri       %} .
+    {% table_header qop       %} .
+    {% table_header auth      %} .
+    {% table_header nonce     %} .
+    {% table_header cnonce    %} .
+    {% table_header nc        %} .
+    {% table_header response  %} .
 
-      "</table>" .
+    "</table>" .
 
-      &dump_content($request->content()) .
+    &dump_content($request->content()) .
 
-      "<p>Request as string=" . $request->as_string() . "</p>" .
+    "<p>Request as string=" . $request->as_string() . "</p>" .
 
-      "</body></html>"
-    );
+    "</body></html>"
+  );
 
   # A little debugging here.
   if (DUMP_REQUEST) {
@@ -528,36 +539,36 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
   my %conf = get_items_by_name($server);
   my %ircconf = get_items_by_name($conf{irc});
 
-  POE::Component::Server::TCP->new
-    ( Port     => $conf{port},
-      ( (defined $conf{iface})
-        ? ( Address => $conf{iface} )
-        : ()
-      ),
-      Acceptor =>
-      sub {
-        POE::Session->new
-          ( _start    => \&httpd_session_started,
-            got_flush => \&httpd_session_flushed,
-            got_query => \&httpd_session_got_query,
-            got_error => \&httpd_session_got_error,
+  POE::Component::Server::TCP->new(
+    Port     => $conf{port},
+    ( (defined $conf{iface})
+      ? ( Address => $conf{iface} )
+      : ()
+    ),
+    Acceptor =>
+    sub {
+      POE::Session->new
+        ( _start    => \&httpd_session_started,
+          got_flush => \&httpd_session_flushed,
+          got_query => \&httpd_session_got_query,
+          got_error => \&httpd_session_got_error,
 
-            # Note the use of ifname here in ARG6.  This gives the
-            # responding session knowledge of its host name for
-            # building HTML responses.  Most of the time it will be
-            # identical to iface, but sometimes there may be a reverse
-            # proxy, firewall, or NATD between the address we bind to
-            # and the one people connect to.  In that case, ifname is
-            # the address the outside world sees, and iface is the one
-            # we've bound to.
+          # Note the use of ifname here in ARG6.  This gives the
+          # responding session knowledge of its host name for
+          # building HTML responses.  Most of the time it will be
+          # identical to iface, but sometimes there may be a reverse
+          # proxy, firewall, or NATD between the address we bind to
+          # and the one people connect to.  In that case, ifname is
+          # the address the outside world sees, and iface is the one
+          # we've bound to.
 
-            [ @_[ARG0..ARG2], $server,
-              $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-              $conf{proxy}, $conf{iname},
-            ],
-          );
-      },
-    );
+          [ @_[ARG0..ARG2], $server,
+            $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
+            $conf{proxy}, $conf{iname},
+          ],
+        );
+    },
+  );
 }
 
 ### Fix paste for presentability.
@@ -570,11 +581,11 @@ sub fix_paste {
   if ($tidied) {
     my $tidy_version = "";
     eval {
-      Perl::Tidy::perltidy
-        ( source      => \$paste,
-          destination => \$tidy_version,
-          argv        => [ '-q', '-nanl', '-fnl' ],
-        );
+      Perl::Tidy::perltidy(
+        source      => \$paste,
+        destination => \$tidy_version,
+        argv        => [ '-q', '-nanl', '-fnl' ],
+      );
     };
     if ($@) {
       $paste = "Could not tidy this paste (try turning tidying off): $@";
@@ -592,15 +603,16 @@ sub fix_paste {
 
     my $highlighted = "";
     eval {
-      Perl::Tidy::perltidy
-        ( source      => \$paste,
-          destination => \$highlighted,
-          argv        => \@html_args,
-        );
+      Perl::Tidy::perltidy(
+        source      => \$paste,
+        destination => \$highlighted,
+        argv        => \@html_args,
+      );
     };
     if ($@) {
-      $highlighted =
-        "Could not highlight the paste (try turning highlighting off): $@";
+      $highlighted = (
+        "Could not highlight the paste (try turning highlighting off): $@"
+      );
     }
     return $highlighted;
   }

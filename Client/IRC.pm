@@ -337,7 +337,8 @@ foreach my $server (get_names_by_type('irc')) {
         },
 
         announce => sub {
-          my ($kernel, $heap, $channel, $message) = @_[KERNEL, HEAP, ARG0, ARG1];
+          my ($kernel, $heap, $channel, $message) =
+            @_[KERNEL, HEAP, ARG0, ARG1];
           $kernel->post( $server => privmsg => $channel => $message );
         },
 
