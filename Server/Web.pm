@@ -18,10 +18,20 @@ use Util::Conf;
 use Util::Web;
 use Util::Data;
 
+use Perl::Tidy;
+
 # Dumps the request to stderr.
 sub DUMP_REQUEST () { 0 }
 
 sub WEB_SERVER_TYPE () { "web_server" }
+
+sub PAGE_FOOTER () {
+  ( "<div align=right><font size='-1'>" .
+    "<a href='http://sf.net/projects/pastebot/'>Pastebot</a>" .
+    " is powered by " .
+    "<a href='http://poe.perl.org/'>POE</a>."
+  )
+}
 
 macro table_method (<header>) {
   "<tr><td><header></td><td>" . $request-><header>() . "</td></tr>"
@@ -111,6 +121,15 @@ sub httpd_session_got_query {
 
   my $url = $request->url() . '';
 
+  ### Fetch the highlighted style sheet.
+
+  if ($url eq '/style') {
+    my $response =
+      static_response( "templates/highlights.css", { } );
+    $heap->{wheel}->put( $response );
+    return;
+  }
+
   ### Store paste.
 
   if ($url eq '/paste') {
@@ -177,23 +196,19 @@ sub httpd_session_got_query {
                           );
       my $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
 
-      $paste = fix_paste($paste);
+      $paste = fix_paste($paste, 0, 0, 0);
 
-      my $response = HTTP::Response->new(200);
-      $response->push_header( 'Content-type', 'text/html' );
-      $response->content
-        ( "<html><head><title>You pasted...</title></head><body>" .
-          $error .
-          "<p>" .
-          "This paste is stored as <a href='$paste_link'>$paste_link</a>." .
-          "</p><p>" .
-          "From: $nick" .
-          "<br>" .
-          "Summary: ($summary)" .
-          "</p>" .
-          "<pre>$paste</pre>" .
-          "</body></html>"
-        );
+      my $response =
+        static_response( "templates/paste-answer.html",
+                         { paste_id   => $id,
+                           error      => $error,
+                           paste_link => $paste_link,
+                           nick       => $nick,
+                           summary    => $summary,
+                           paste      => $paste,
+                           footer     => PAGE_FOOTER,
+                         }
+                       );
 
       if ($channel and $channel =~ /^\#/) {
         $kernel->post( "irc_client_$heap->{my_isrv}" => announce =>
@@ -210,35 +225,42 @@ sub httpd_session_got_query {
 
   ### Fetch paste.
 
-  if ($url =~ m!^/(\d+)(/nolines)?!) {
-    my ($num, $nolines) = ($1, $2);
+  if ($url =~ m!^/(\d+)(?:\?(.*?)\s*)?$!) {
+    my ($num, $params) = ($1, $2);
     my ($nick, $summary, $paste) = fetch_paste($num);
 
     if (defined $paste) {
 
+      my $query = parse_content($params);
+
       ### Make the paste pretty.
 
-      my $paste = fix_paste($paste, $nolines);
+      my $ln = $query->{ln};
+      $ln = 0 unless $ln;
+
+      my $tidy = $query->{tidy};
+      $tidy = 0 unless $tidy;
+
+      my $hl = $query->{hl};
+      $hl = 0 unless $hl;
+
+      my $paste = fix_paste($paste, $ln, $tidy, $hl);
 
       # Spew the paste.
 
-      my $response = HTTP::Response->new(200);
-      $response->push_header( 'Content-type', 'text/html' );
-      $response->content
-        ( "<html><head><title>Introducing... paste!</title></head>" .
-          "<body><h1>Here you go...</h1>" .
-          ( $nolines
-            ? qq(<p><a href="/$num">Add line numbers.</a></p>)
-            : qq(<p><a href="/$num/nolines">Remove line numbers.</a></p>)
-          ) .
-          "<p>" .
-          "From: $nick" .
-          "<br>" .
-          "Summary: $summary" .
-          "</p>" .
-          "<pre>$paste</pre>" .
-          "</body></html>"
-        );
+      my $response =
+        static_response( "templates/paste-lookup.html",
+                         { bot_name => $heap->{my_name},
+                           paste_id => $num,
+                           nick     => $nick,
+                           summary  => $summary,
+                           paste    => $paste,
+                           footer   => PAGE_FOOTER,
+                           tidy     => ( $tidy ? "checked" : "" ),
+                           hl       => ( $hl ? "checked" : "" ),
+                           ln       => ( $ln ? "checked" : "" ),
+                         }
+                       );
 
       $heap->{wheel}->put( $response );
       return;
@@ -253,8 +275,6 @@ sub httpd_session_got_query {
   ### Root page.
 
   if ($url eq '/') {
-    my $response = HTTP::Response->new(200);
-    $response->push_header( 'Content-type', 'text/html' );
 
     # Dynamically build the channel options from the configuration
     # file's list.  The first one is the default.
@@ -267,30 +287,14 @@ sub httpd_session_got_query {
 
     # Build content.
 
-    $response->content
-      ( "<html><head><title>$heap->{my_name} main menu</title></head>" .
-        "<body>" .
-        "<h1>No paste!</h1>" .
-        "<p>This is an experiment in automatic non-pasting.  People post " .
-        "content here, and the bot sends an URL to channel to retrieve it." .
-        "  This service is tailored for source code listings." .
-        "<form method='post' action='/paste' " .
-        "enctype='application/x-www-form-urlencoded'>" .
-        "<p>Channel: " .
-        "<select name='channel'>@channels</select>" .
-        "</p>" .
-        "<p>Nick (optional): " .
-        "<input type='text' name='nick' size='25' maxlength='25'></p>" .
-        "<p>Summary (optional): " .
-        "<input type='text' name='summary' size='80' maxlength='160'></p>" .
-        "Source code:<br>" .
-        "<textarea name='paste' rows=25 cols=75 " .
-        "style='width:100%' wrap='none'></textarea>" .
-        "<p><input type='submit' name='Paste it' value='Paste it'></p>" .
-        "</body></html>"
-      );
-
-    $heap->{wheel}->put( $response );
+    my $response =
+      static_response( "templates/paste-form.html",
+                       { bot_name => $heap->{my_name},
+                         channels => "@channels",
+                         footer   => PAGE_FOOTER,
+                       }
+                     );
+    $heap->{wheel}->put($response);
     return;
   }
 
@@ -305,8 +309,13 @@ sub httpd_session_got_query {
   local $^W = 0;
 
   $response->content
-    ( "<html><head><title>test</title></head>" .
-      "<body>Your request was strange:<table border=1>" .
+    ( "<html><head><title>Strange Request Dump</title></head>" .
+      "<body>" .
+      "<p>" .
+      "Your request was strange.  " .
+      "Here is everything I could figure out about it:" .
+      "</p>" .
+      "<table border=1>" .
 
       {% table_method authorization             %} .
       {% table_method authorization_basic       %} .
@@ -411,33 +420,61 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 ### Fix paste for presentability.
 
 sub fix_paste {
-  my ($paste, $nonums) = @_;
+  my ($paste, $line_nums, $tidied, $highlighted) = @_;
+
+  ### If the code is tidied, then tidy it.
+
+  if ($tidied) {
+    my $tidied = "";
+    Perl::Tidy::perltidy
+      ( source      => \$paste,
+        destination => \$tidied,
+        argv        => [ '-q', '-nanl', '-fnl' ],
+      );
+    $paste = $tidied;
+  }
+
+  ### If the code is to be highlighted, then highlight it.
+
+  if ($highlighted) {
+    my @html_args = qw( -q -html -pre );
+    push @html_args, "-nnn" if $line_nums;
+
+    my $html = "";
+    Perl::Tidy::perltidy
+      ( source      => \$paste,
+        destination => \$html,
+        argv        => \@html_args,
+      );
+    return $html;
+  }
+
+  ### Code's not highlighted.  HTML escaping time.  Forgive me.
 
   # Prepend line numbers to each line.
 
-  if ($nonums) {
-    # <br>s without spaces between them don't get a blank line
-    $paste =~ s/\n\r?\n/\n \n/g;
-  }
-  else {
+  if ($line_nums) {
     my $total_lines = 0;
     $total_lines++ while ($paste =~ m/^/gm);
     my $line_number_width = length($total_lines);
+    $line_number_width = 4 if $line_number_width < 4;  # To match Perl::Tidy.
 
     my $line_number = 0;
     while ($paste =~ m/^/gm) {
       my $pos = pos($paste);
       substr($paste, pos($paste), 0) =
-        sprintf("\%${line_number_width}d: ", ++$line_number);
+        sprintf("\%${line_number_width}d ", ++$line_number);
       pos($paste) = $pos + 1;
     }
   }
-
-  # Escape some HTML.  Forgive me.
+  else {
+    # <br>s without spaces between them don't get a blank line
+    $paste =~ s/\n\r?\n/\n \n/g;
+  }
 
   $paste = html_encode($paste);
 
-  $paste =~ s/(\x0d\x0a?|\x0a\x0d?)/<br \/>/gi;  # pp breaks
+  $paste =~ s/(\x0d\x0a?|\x0a\x0d?)/<br \/>/gi;  # line breaks
   $paste =~ s/(?:<br \/>\s*){2,}<br \/>/<br \/><br \/>/gi;
   $paste =~ s/\t/    /g;  # can mess up internal tabs, oh well
 
@@ -447,8 +484,17 @@ sub fix_paste {
 
   # Buhbye.
 
-  return $paste;
+  return "<pre>$paste</pre>";
 }
 
 #------------------------------------------------------------------------------
 1;
+
+__END__
+
+    my $template =
+      Text::Template->new( TYPE => 'FILE',
+                           DELIMITERS => [ '<%','%>' ],
+                           SOURCE => "$Templates/header.html"
+                         );
+    $result = $template->fill_in(HASH => \%data);
