@@ -396,7 +396,7 @@ foreach my $server (get_names_by_type('irc')) {
 
         irc_quit => sub {
           my ($kernel, $heap, $who, $what) = @_[KERNEL, HEAP, ARG0, ARG1];
-          
+
           my ($nick) = $who =~ /^([^!]+)/;
           for (keys %{$heap->{users}}) {
             delete $heap->{users}{$_}{$nick};
@@ -445,7 +445,7 @@ foreach my $server (get_names_by_type('irc')) {
         irc_315 => sub {},
         # end of /who
         irc_366 => sub {},
-        
+
         irc_disconnected => sub {
           my ($kernel, $heap, $server) = @_[KERNEL, HEAP, ARG0];
           print "Lost connection to server $server.\n";
