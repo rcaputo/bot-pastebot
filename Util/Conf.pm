@@ -37,6 +37,7 @@ my %define =
       iname     => SCALAR | REQUIRED,
       away      => SCALAR | REQUIRED,
       flags     => SCALAR,
+      inviteany => SCALAR,
       channel   => LIST   | REQUIRED,
       quit      => SCALAR | REQUIRED,
       cuinfo    => SCALAR | REQUIRED,

@@ -126,6 +126,11 @@ irc
         channel   poe
         channel   perl
 
+        # If this flag is a true value, the bot will not join channels
+        # not listed above when invited.
+
+        #inviteany 1
+
         # The address the IRC bot binds to.  This lets the bot listen
         # on one vhost out of many that might be available to a
         # particular machine.
