@@ -4,17 +4,15 @@ DISTBUILD=$(DISTNAME)
 DISTTAR=$(DISTNAME).tar
 DISTTGZ=$(DISTTAR).gz
 
-DESTDIR	    =
-prefix      = $(DESTDIR)/usr
+prefix      = /usr/local
+datadir	    = $(prefix)/share
 exec_prefix = $(prefix)
 man_prefix  = $(prefix)/share
-sysconfdir  = $(DESTDIR)/etc
-datadir	    = $(prefix)/share
+sysconfdir  = $(prefix)/etc
 
 INSTALL         = /usr/bin/install
 INSTALL_BIN     = -m 755
 INSTALL_DATA    = -m 644
-
 
 PACKAGE		= pastebot
 
@@ -33,11 +31,11 @@ DATADIR     = $(datadir)/$(PACKAGE)
 PASTEDIR    = $(datadir)/$(PACKAGE)/pastestore
 ETCDIR	    = $(sysconfdir)/$(PACKAGE)
 
-TAR_OPT_EX  = --exclude=CVS --exclude=*[~\#] 
+TAR_OPT_EX  = --exclude=CVS --exclude=*[~\#] --exclude *.conf *.orig patch.* *.bak
 
 dist: $(DISTTGZ)
 
-$(DISTTGZ): distdir
+$(DISTTGZ): distdir changes
 	if [ -e $(DISTTGZ) ] ; \
 	  then echo $(DISTTGZ) already exists ; \
 	       exit 1 ; \
@@ -63,7 +61,7 @@ install-cpan:
 	'	
 
 install-etc:
-	$(INSTALL) $(INSTALL_DATA) -d $(ETCDIR)
+	$(INSTALL) $(INSTALL_BIN) -d $(ETCDIR)
 	if [ ! -d $(ETCDIR) ]; then exit 1; fi
 	@if [ -f $(ETCDIR)/$(LIBFILE) ]; then \
 	  echo "Not installing, file exists $(ETCDIR)/$(LIBFILE)"; \
@@ -78,15 +76,15 @@ install-etc:
 	echo "You may need to edit files in $(ETCDIR)"
 
 install-store:
-	$(INSTALL) $(INSTALL_DATA) -d $(PASTEDIR)
+	$(INSTALL) $(INSTALL_BIN) -d $(PASTEDIR)
 
 install-lib: install-store
-	$(INSTALL) $(INSTALL_DATA) -d $(DATADIR)
+	$(INSTALL) $(INSTALL_BIN) -d $(DATADIR)
 	if [ ! -d $(DATADIR) ]; then exit 1; fi
 	tar $(TAR_OPT_EX) -cf - * | (cd $(DATADIR); tar -xf -)
 
 install-bin: 
-	$(INSTALL) $(INSTALL_DATA) -d $(BINDIR)
+	$(INSTALL) $(INSTALL_BIN) -d $(BINDIR)
 	$(INSTALL) $(INSTALL_BIN) $(BINSRC) $(BINDIR)/$(BINFILE)
 
 install: install-lib install-bin install-etc
@@ -107,3 +105,6 @@ filecheck:
 
 mkmanifest:
 	perl -MExtUtils::Manifest=mkmanifest -e 'mkmanifest()'
+
+changes:
+	cvs-log.perl > CHANGES

@@ -4,24 +4,26 @@ $Id$
 About
 -----
 
-To do.
+Pastebot is a web-based dropbox for small texts.  On the one hand, it
+is a web server, accepting "pastes" from one person to share with
+others.  On the other hand, it is an IRC bot that announces paste URLs
+on appropriate channels.
 
 -------------
 Quick install
 -------------
 
-If you're the system administrator of Linux/Unix/Cygwin like machine,
-to install the package, use following commads. The first one can be
-left out if you already have all the required Perl modules.
+If you're the system administrator for your machine, you can install
+all the necessary modules with
 
   make install-cpan
   make install
 
 The default installation structure:
 
-  /etc/pastebot/	Configuration files
-  /usr/share/pastebot	Libraries
-  /usr/bin		executables	
+  /usr/local/etc/pastebot/      Configuration files
+  /usr/local/share/pastebot     Libraries
+  /usr/local/bin                Executables
 
 ------------
 Requirements
@@ -37,12 +39,11 @@ You'll need the following Perl modules.
   HTTP::Status
   POE
   POE::Component::IRC
+  Perl::Tidy
   Storable              (comes with perl 5.8.1)
   Text::Template
-  Time::HiRes
+  Time::HiRes           (comes with perl 5.8.1)
   URI
-
-  Perl::Tidy, which is part of perltidy, at http://perltidy.sf.net/
 
 ----------
 Setting up
