@@ -110,19 +110,19 @@ foreach my $server (get_names_by_type('irc')) {
         connect => sub {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
 
-          my $server = $conf{server}->[$heap->{server_index}];
-          my $port = 6667;
-          if ($server =~ s/[\s\:]+(\S+)\s*$//) {
-            $port = $1;
+          my $chosen_server = $conf{server}->[$heap->{server_index}];
+          my $chosen_port = 6667;
+          if ($chosen_server =~ s/[\s\:]+(\S+)\s*$//) {
+            $chosen_port = $1;
           }
 
-          warn "server($server) port($port)";
+          # warn "server($chosen_server) port($chosen_port)";
 
           $kernel->post( $server => connect =>
                          { Debug     => 0,
                            Nick      => $conf{nick},
-                           Server    => $server,
-                           Port      => $port,
+                           Server    => $chosen_server,
+                           Port      => $chosen_port,
                            Username  => $conf{uname},
                            Ircname   => $conf{iname},
                            LocalAddr => $conf{localaddr},
