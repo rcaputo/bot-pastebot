@@ -415,13 +415,13 @@ sub httpd_session_got_query {
       $prefchan =~ s/^/#/;
       push @channels, grep { $_ eq $prefchan } @tmpchans;
       push @channels, grep { $_ ne $prefchan } @tmpchans;
-    } else {
+    }
+    else {
       @channels = @tmpchans;
     }
 
     if (@channels) {
       @channels = map { "<option value='$_'>$_" } @channels;
-      $channels[0] =~ s/\'\>/\' selected>/;
       @channels = sort @channels;
     }
     unshift(@channels, "<option value=''>(none)");
