@@ -24,6 +24,12 @@ Android18 supplied a nicer style sheet for syntax highlighting.
 
 Rocco removed some things from CHANGES that were done already.
 
+Kane discovered that MSIE treats <br> within <pre></pre> as a tag
+rather than a newline.  The result was that code copied from nopaste
+and pasted into an editor would appear as one jumbled line.  Rocco
+removed the code to make <br> tags out of newlines, and he also
+removed the &nbsp; code.  That wasn't needed in <pre></pre> either.
+
 ----------
 2002-05-07
 ----------

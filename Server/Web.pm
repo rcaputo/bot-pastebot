@@ -467,20 +467,14 @@ sub fix_paste {
       pos($paste) = $pos + 1;
     }
   }
-  else {
-    # <br>s without spaces between them don't get a blank line
-    $paste =~ s/\n\r?\n/\n \n/g;
-  }
 
   $paste = html_encode($paste);
 
-  $paste =~ s/(\x0d\x0a?|\x0a\x0d?)/<br \/>/gi;  # line breaks
-  $paste =~ s/(?:<br \/>\s*){2,}<br \/>/<br \/><br \/>/gi;
-  $paste =~ s/\t/    /g;  # can mess up internal tabs, oh well
+  # Normalize newlines.  Translate whichever format to just \n, and
+  # limit the number of consecutive newlines to two.
 
-  # Preserve indents and other whitespacey things.
-
-  $paste =~ s/(^|<br \/>| ) /$1&nbsp;/g;
+  $paste =~ s/(\x0d\x0a?|\x0a\x0d?)/\n/g;
+  $paste =~ s/\n\n+/\n\n/;
 
   # Buhbye.
 
@@ -489,12 +483,3 @@ sub fix_paste {
 
 #------------------------------------------------------------------------------
 1;
-
-__END__
-
-    my $template =
-      Text::Template->new( TYPE => 'FILE',
-                           DELIMITERS => [ '<%','%>' ],
-                           SOURCE => "$Templates/header.html"
-                         );
-    $result = $template->fill_in(HASH => \%data);
