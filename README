@@ -33,7 +33,30 @@ Rename pastebot.conf-dist to pastebot.conf (unless you have one already).
 Customize your new/existing pastebot.conf.
 Run pastebot.perl.
 
-To do.
+Pastebot is its own web server.  It often cannot bind to port 80
+because some other web server is already there.  That's why its
+default port (in pastebot.conf-dist) is 8888.  This is hostile towards
+people behind firewalls.
+
+Apache users can use ProxyPass to map a directory on their port-80
+servers to a running pastebot.  This feature requires Apache be built
+with proxy support.
+
+Allow access to a /pastebot/ directory.  The directory should not
+exist.
+
+  <Directory /pastebot/>
+    Order allow,deny
+    Allow from all
+    Deny from none
+  </Directory>
+
+Tell Apache to forward any requests in the /pastebot/ directory
+through to the local pastebot process.
+
+  ProxyPass  /pastebot/  http://127.0.0.1:8000/
+
+Now people can use pastebot on port 80.
 
 ------
 Errors
