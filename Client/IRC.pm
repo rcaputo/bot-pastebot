@@ -101,8 +101,7 @@ foreach my $server (get_names_by_type('irc')) {
 
         autoping => sub {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
-          $kernel->post( $server => userhost => 
-                         $conf{nick}->[$heap->{nick_index}] )
+          $kernel->post($server => userhost => $heap->{my_nick})
             unless $heap->{seen_traffic};
           $heap->{seen_traffic} = 0;
           $kernel->delay( autoping => 300 );
@@ -119,9 +118,12 @@ foreach my $server (get_names_by_type('irc')) {
 
           # warn "server($chosen_server) port($chosen_port)";
 
+          $heap->{nick_index} = 0;
+          $heap->{my_nick} = $conf{nick}->[$heap->{nick_index}];
+
           $kernel->post( $server => connect =>
                          { Debug     => 0,
-                           Nick      => $conf{nick}->[0],
+                           Nick      => $heap->{my_nick},
                            Server    => $chosen_server,
                            Port      => $chosen_port,
                            Username  => $conf{uname},
@@ -129,8 +131,6 @@ foreach my $server (get_names_by_type('irc')) {
                            LocalAddr => $conf{localaddr},
                          }
                        );
-
-          $heap->{nick_index} = 0;
 
           $heap->{server_index}++;
           $heap->{server_index} = 0
@@ -277,17 +277,17 @@ foreach my $server (get_names_by_type('irc')) {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
 
           $heap->{nick_index}++;
-          
           my $newnick = $conf{nick}->[$heap->{nick_index} % @{$conf{nick}}];
           if ($heap->{nick_index} >= @{$conf{nick}}) {
             $newnick .= $heap->{nick_index} - @{$conf{nick}};
             $kernel->delay( ison => 120 );
           }
-          
+          $heap->{my_nick} = $newnick;
+
           warn "Nickclash, now trying $newnick\n";
           $kernel->post( $server => nick => $newnick );
         },
-        
+
         ison => sub {
           $_[KERNEL]->post( $server => ison => @{$conf{nick}} );
         },
@@ -323,8 +323,9 @@ foreach my $server (get_names_by_type('irc')) {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
 
           if (defined $conf{flags}) {
-            $kernel->post( $server => mode => 
-              $conf{nick}->[$heap->{nick_index}] => $conf{flags} );
+            $kernel->post(
+              $server => mode => $heap->{my_nick} => $conf{flags}
+            );
           }
           $kernel->post( $server => away => $conf{away} );
 
@@ -373,11 +374,11 @@ foreach my $server (get_names_by_type('irc')) {
         irc_join => sub {
           my ($kernel, $heap, $who, $where) = @_[KERNEL, HEAP, ARG0, ARG1];
           my ($nick) = $who =~ /^([^!]+)/;
-          if (lc $nick eq lc $conf{nick}->[$heap->{nick_index}]) {
+          if (lc ($nick) eq lc($heap->{my_nick})) {
             add_channel($where);
             $kernel->post( $server => who => $where );
           }
-          @{$heap->{users}{$where}{$nick}}{qw(ident host)} = 
+          @{$heap->{users}{$where}{$nick}}{qw(ident host)} =
             (split /[!@]/, $who, 8)[1, 2];
         },
 
@@ -386,7 +387,7 @@ foreach my $server (get_names_by_type('irc')) {
             = @_[KERNEL, HEAP, ARG0..ARG3];
           print "$nick was kicked from $where by $who: $reason\n";
           delete $heap->{users}{$where}{$nick};
-          if (lc $nick eq lc $conf{nick}->[$heap->{nick_index}]) {
+          if (lc($nick) eq lc($heap->{my_nick})) {
             remove_channel($where);
             delete $heap->{users}{$where};
           }
@@ -407,12 +408,6 @@ foreach my $server (get_names_by_type('irc')) {
 
           my ($nick) = $who =~ /^([^!]+)/;
           delete $heap->{users}{$where}{$nick};
-        },
-
-        irc_join => sub {
-          my ($kernel, $who, $where) = @_[KERNEL, ARG0, ARG1];
-          my ($nick) = $who =~ /^([^!]+)/;
-          add_channel($where) if lc($nick) eq lc($conf{nick});
         },
 
         # who reply
