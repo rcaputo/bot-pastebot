@@ -110,6 +110,9 @@ this.
 
 Admin flags, so users can maintain the bot via the web.
 
+Having an authenticated web account means not needing to publish your
+IP address.
+
 -----------
 Admin list.
 -----------
@@ -203,11 +206,6 @@ make visible changes easier.
 Have the bot grab a list of /names when it joins a channel.  It then
 watches as users join, part, quit, or are kicked and manages that
 list.
-
-*** Paste expiration.
-
-Have pastebot manage its database, purging old paste after it has not
-been viewed for 24 hours.
 
 *** Make databases persistent.
 

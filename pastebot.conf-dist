@@ -40,9 +40,10 @@ web_server
 
 	# proxy 127.0.0.1
 
-        # (optional) name to advertise pastes as.  Use when behind a
-        # proxy to hide the internal host/port details.  Should agree
-        # with an iname value for an IRC client, below.
+        # (optional) URL to advertise the pastebot server at.  This
+        # should agree with the iname value for IRC clients, below.
+        # If you use ProxyPass, this should point to the Apache
+        # location where people will go for pasting/fetching.
 
         #iname http://poe.perl.org:8888/
 

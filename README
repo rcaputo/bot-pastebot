@@ -60,6 +60,9 @@ Now people can use pastebot on port 80.  Be sure to set the 'iname'
 configuration flag in the pastebot.conf web_server configuration section
 to hide the internal host/port values.
 
+Be sure to set the "iname" option to point to your Apache server
+rather than the pastebot server directly.
+
 ------
 Errors
 ------
