@@ -12,49 +12,50 @@ use Env;
 
 use vars qw(@ISA @EXPORT %OPTS);
 @ISA    = qw(Exporter);
-@EXPORT = qw( get_names_by_type
-              get_items_by_name
-            );
+@EXPORT = qw(
+  get_names_by_type
+  get_items_by_name
+);
 
 sub SCALAR   () { 0x01 }
 sub LIST     () { 0x02 }
 sub REQUIRED () { 0x04 }
 
-my %define =
-  ( web_server =>
-    { name    => SCALAR | REQUIRED,
-      iface   => SCALAR,
-      ifname  => SCALAR,
-      port    => SCALAR | REQUIRED,
-      irc     => SCALAR | REQUIRED,
-      proxy   => SCALAR,
-      iname   => SCALAR,
-    },
-    irc =>
-    { name          => SCALAR | REQUIRED,
-      server        => LIST   | REQUIRED,
-      nick          => LIST   | REQUIRED,
-      uname         => SCALAR | REQUIRED,
-      iname         => SCALAR | REQUIRED,
-      away          => SCALAR | REQUIRED,
-      flags         => SCALAR,
-      join_cfg_only => SCALAR,
-      channel       => LIST   | REQUIRED,
-      quit          => SCALAR | REQUIRED,
-      cuinfo        => SCALAR | REQUIRED,
-      cver          => SCALAR | REQUIRED,
-      ccinfo        => SCALAR | REQUIRED,
-      localaddr     => SCALAR,
-    },
-    pastes =>
-    { name      => SCALAR | REQUIRED,
-      check	=> SCALAR,
-      expire	=> SCALAR,
-      count	=> SCALAR,
-      throttle	=> SCALAR,
-      store     => SCALAR | REQUIRED,
-    },
-  );
+my %define = (
+  web_server => {
+    name    => SCALAR | REQUIRED,
+    iface   => SCALAR,
+    ifname  => SCALAR,
+    port    => SCALAR | REQUIRED,
+    irc     => SCALAR | REQUIRED,
+    proxy   => SCALAR,
+    iname   => SCALAR,
+  },
+  irc => {
+    name          => SCALAR | REQUIRED,
+    server        => LIST   | REQUIRED,
+    nick          => LIST   | REQUIRED,
+    uname         => SCALAR | REQUIRED,
+    iname         => SCALAR | REQUIRED,
+    away          => SCALAR | REQUIRED,
+    flags         => SCALAR,
+    join_cfg_only => SCALAR,
+    channel       => LIST   | REQUIRED,
+    quit          => SCALAR | REQUIRED,
+    cuinfo        => SCALAR | REQUIRED,
+    cver          => SCALAR | REQUIRED,
+    ccinfo        => SCALAR | REQUIRED,
+    localaddr     => SCALAR,
+  },
+  pastes => {
+    name      => SCALAR | REQUIRED,
+    check     => SCALAR,
+    expire    => SCALAR,
+    count     => SCALAR,
+    throttle  => SCALAR,
+    store     => SCALAR | REQUIRED,
+  },
+);
 
 my ($section, $section_line, %item, %config);
 
@@ -65,13 +66,18 @@ sub flush_section {
       my $item_type = $define{$section}->{$item_name};
 
       if ($item_type & REQUIRED) {
-        die "$section section needs a(n) $item_name item at $section_line\n"
-          unless exists $item{$item_name};
+        die(
+          "section `$section' ",
+          "requires item `$item_name' ",
+          "at $cfile line $section_line\n"
+        ) unless exists $item{$item_name};
       }
     }
 
-    die "$section section $item{name} is redefined at $section_line\n"
-      if exists $config{$item{name}};
+    die(
+      "section `$section' ",
+      "item `$item{name}' is redefined at $section_line\n"
+    ) if exists $config{$item{name}};
 
     my $name = $item{name};
     $config{$name} = { %item, type => $section };
@@ -82,7 +88,9 @@ my %opts;
 getopts("f:", \%opts);
 my $cfile = $opts{"f"}; 
 my $f = "pastebot.conf";
-my @conf  = ("./$f", "$HOME/$f", "/etc/pastebot/$f");
+my @conf  = (
+  "./$f", "$HOME/$f", "/etc/pastebot/$f", "/usr/local/etc/pastebot/$f"
+);
 
 unless ( $cfile ) {
     for my $try ( @conf ) {
@@ -97,7 +105,6 @@ unless ( $cfile  and  -f $cfile ) {
     die "\n$0: Cannot read configuration file [$cfile], tried: @conf";
 }
 
-
 open(MPH, "<$cfile") or die "config file [$cfile] $!";
 while (<MPH>) {
   chomp;
@@ -107,18 +114,22 @@ while (<MPH>) {
   # Section item.
   if (/^\s+(\S+)\s+(.*?)\s*$/) {
 
-    die "item outside a section at pastebot.conf line $.\n"
-      unless defined $section;
+    die(
+      "cannot use an indented item ($1) outside of an unindented section ",
+      "at $cfile line $.\n"
+    ) unless defined $section;
 
-    die "unknown $section item at pastebot.conf line $.\n"
-      unless exists $define{$section}->{$1};
+    die(
+      "item `$item' does not belong in section `$section' ",
+      "at $cfile line $.\n"
+    ) unless exists $define{$section}->{$1};
 
     if (exists $item{$1}) {
       if (ref($item{$1}) eq 'ARRAY') {
         push @{$item{$1}}, $2;
       }
       else {
-        die "option $1 redefined at pastebot.conf line $.\n";
+        die "option $1 redefined at $cfile line $.\n";
       }
     }
     else {
@@ -152,7 +163,7 @@ while (<MPH>) {
     next;
   }
 
-  die "syntax error in pastebot.conf at line $.\n";
+  die "syntax error in $cfile at line $.\n";
 }
 
 &flush_section();

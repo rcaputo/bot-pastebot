@@ -23,6 +23,7 @@ use Env;
 my @CONFIG_FILE = qw(
    $HOME/.pastebot.lib
    /etc/pastebot/pastebot.lib
+   /usr/local/etc/pastebot/pastebot.lib
    .
 );
 
