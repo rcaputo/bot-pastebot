@@ -58,16 +58,18 @@ irc
 
         name      efnet
 
-        # A list of IRC servers to connect to.  The bot will cycle
-        # through them in order, so put your favorites first.
+        # A list of IRC servers and ports to connect to.  The bot will
+        # cycle through them in order, so put your favorites first.
+        # 
+        # Port numbers are optional and will default to 6667 if omitted.
 
-	server	irc.carrier1.net.uk
-	server	irc.daxnet.no
-	server	irc.arcti.ca
-	server	irc2.lightning.net
-	server	irc.Qeast.net
-	server	irc.homelien.no
-	server	irc.efnet.pl
+	server	irc.carrier1.net.uk     6667
+	server	irc.daxnet.no           6667
+	server	irc.arcti.ca            6667
+	server	irc2.lightning.net      6667
+	server	irc.Qeast.net           6667
+	server	irc.homelien.no         6667
+	server	irc.efnet.pl            6667
 
         # The nickname this client will use.
 
