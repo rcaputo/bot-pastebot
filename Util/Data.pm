@@ -15,6 +15,7 @@ use vars  qw(@ISA @EXPORT);
 @EXPORT = qw( store_paste fetch_paste delete_paste list_paste_ids 
               delete_paste_by_id fetch_paste_channel clear_channel_ignores
               set_ignore clear_ignore get_ignores is_ignored
+              channels add_channel remove_channel
             );
 
 sub PASTE_TIME    () { 0 }
@@ -28,6 +29,7 @@ sub PASTE_HOST    () { 6 }
 my $id_sequence = 0;
 my %paste_cache;
 my %ignores; # $ignores{$ircnet}{lc $channel} = [ mask, mask, ... ];
+my @channels;
 
 # return a list of all paste ids
 
@@ -169,6 +171,34 @@ sub clear_channel_ignores {
   my ($ircnet, $channel) = @_;
 
   $ignores{$ircnet}{lc $channel} = [];
+}
+
+# Channels we're on
+
+sub channels {
+  return @channels;
+}
+
+sub clear_channels {
+  @channels = ();
+  return if @channels;  # Should never happen
+  return 1;
+}
+
+sub add_channel {
+  my ($channel) = @_;
+  $channel = lc $channel;
+  return if grep $_ eq $channel, @channels;
+  return push @channels, $channel;
+}
+
+sub remove_channel {
+  my ($channel) = @_;
+  $channel = lc $channel;
+  my $found = 0;
+  @channels = grep { $_ eq $channel ? do { $found++; 0; } : 1 } @channels;
+  return if not $found;
+  return $found;
 }
 
 my @pastes = get_names_by_type('pastes');

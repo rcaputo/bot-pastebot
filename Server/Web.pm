@@ -53,7 +53,7 @@ macro table_header (<header>) {
 sub httpd_session_started {
   my ( $heap,
        $socket, $remote_address, $remote_port,
-       $my_name, $my_host, $my_port, $my_ifname, $my_isrv, $my_chans,
+       $my_name, $my_host, $my_port, $my_ifname, $my_isrv, 
        $proxy, $my_iname,
      ) = @_[HEAP, ARG0..$#_];
 
@@ -66,7 +66,6 @@ sub httpd_session_started {
   $heap->{my_inam}  = $my_ifname;
   $heap->{my_iname} = $my_iname;
   $heap->{my_isrv}  = $my_isrv;
-  $heap->{my_chans} = $my_chans;
   $heap->{my_proxy} = $proxy;
 
   $heap->{remote_addr} = inet_ntoa($remote_address);
@@ -180,10 +179,10 @@ sub httpd_session_got_query {
 
       # Goes as a separate block.
       if (length $channel) {
-        unless (grep { "\#$_" eq $channel } @{$heap->{my_chans}}) {
+        unless (grep $_ eq $channel, channels()) {
           $error =
             ( "<p><b><font size='+1' color='#800000'>" .
-              "The channel you pasted to is not known." .
+              "I'm not on $channel." .
               "</font></b></p>"
             );
           $channel = "";
@@ -345,12 +344,13 @@ sub httpd_session_got_query {
     # Dynamically build the channel options from the configuration
     # file's list.
 
-    my @tmpchans = @{$heap->{my_chans}};
+    my @tmpchans = channels();
     my @channels;
 
     # set default channel from request URL, if possible
     my $prefchan = $1;
     if ($prefchan) {
+      $prefchan =~ s/^/#/;
       push @channels, grep { $_ eq $prefchan } @tmpchans;
       push @channels, grep { $_ ne $prefchan } @tmpchans;
     } else {
@@ -358,8 +358,8 @@ sub httpd_session_got_query {
     }
 
     if (@channels) {
-      @channels = map { "<option value='\#$_'>\#$_" } @channels;
-      $channels[0] =~ s/\'\>\#/\' selected>\#/;
+      @channels = map { "<option value='$_'>$_" } @channels;
+      $channels[0] =~ s/\'\>/\' selected>/;
       @channels = sort @channels;
     }
     unshift(@channels, "<option value=''>(none)");
@@ -489,7 +489,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 
             [ @_[ARG0..ARG2], $server,
               $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-              $ircconf{channel}, $conf{proxy}, $conf{iname},
+              $conf{proxy}, $conf{iname},
             ],
           );
       },

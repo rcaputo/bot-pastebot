@@ -360,27 +360,37 @@ foreach my $server (get_names_by_type('irc')) {
         $kernel->yield( join => $where );
       },
 
+      irc_join => sub {
+        my ($kernel, $who, $where) = @_[KERNEL, ARG0, ARG1];
+        my ($nick) = $who =~ /^([^!]+)/;
+        add_channel($where) if lc $nick eq lc $conf{nick};
+      },
+
       irc_kick => sub {
-        my ($kernel, $who, $where, $isitme, $reason) = @_[KERNEL, ARG0..ARG4];
+        my ($kernel, $who, $where, $nick, $reason) = @_[KERNEL, ARG0..ARG3];
         print "$who was kicked from $where: $reason\n";
+        remove_channel($where) if lc $nick eq lc $conf{nick};
         # $kernel->delay( join => 15 => $where );
       },
 
       irc_disconnected => sub {
         my ($kernel, $server) = @_[KERNEL, ARG0];
         print "Lost connection to server $server.\n";
+        clear_channels();
         $kernel->delay( connect => 60 );
       },
 
       irc_error => sub {
         my ($kernel, $error) = @_[KERNEL, ARG0];
         print "Server error occurred: $error\n";
+        clear_channels();
         $kernel->delay( connect => 60 );
       },
 
       irc_socketerr => sub {
         my ($kernel, $error) = @_[KERNEL, ARG0];
         print "IRC client ($server): socket error occurred: $error\n";
+        clear_channels();
         $kernel->delay( connect => 60 );
       },
 
