@@ -208,25 +208,29 @@ sub clear_channel_ignores {
 # Channels we're on
 
 sub channels {
-  return sort keys %channels;
+  my $network = lc(shift);
+  return sort keys %{$channels{$network}};
 }
 
 sub clear_channels {
-  %channels = ();
-  return if keys %channels;  # Should never happen
+  my $network = lc(shift);
+  %{$channels{$network}} = ();
+  return if keys %{$channels{$network}};  # Should never happen
   return 1;
 }
 
 sub add_channel {
-  my ($channel) = @_;
+  my ($network, $channel) = @_;
+  $network = lc($network);
   $channel = lc($channel);
-  $channels{$channel} = 1;
+  $channels{$network}{$channel} = 1;
 }
 
 sub remove_channel {
-  my ($channel) = @_;
+  my ($network, $channel) = @_;
+  $network = lc($network);
   $channel = lc($channel);
-  delete $channels{$channel};  # returns automatically
+  delete $channels{$network}{$channel};  # returns automatically
 }
 
 # Init stuff

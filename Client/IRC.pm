@@ -172,7 +172,7 @@ foreach my $server (get_names_by_type('irc')) {
               @igchans = split ',', lc $channels;
             }
             else {
-              @igchans = map lc, channels();
+              @igchans = map lc, channels($conf{name});
             }
             # only the channels the user is an operator on
             @igchans = grep {exists $heap->{users}{$_}{$nick}{mode} and
@@ -375,7 +375,7 @@ foreach my $server (get_names_by_type('irc')) {
           my ($kernel, $heap, $who, $where) = @_[KERNEL, HEAP, ARG0, ARG1];
           my ($nick) = $who =~ /^([^!]+)/;
           if (lc ($nick) eq lc($heap->{my_nick})) {
-            add_channel($where);
+            add_channel($conf{name}, $where);
             $kernel->post( $server => who => $where );
           }
           @{$heap->{users}{$where}{$nick}}{qw(ident host)} =
@@ -388,7 +388,7 @@ foreach my $server (get_names_by_type('irc')) {
           print "$nick was kicked from $where by $who: $reason\n";
           delete $heap->{users}{$where}{$nick};
           if (lc($nick) eq lc($heap->{my_nick})) {
-            remove_channel($where);
+            remove_channel($conf{name}, $where);
             delete $heap->{users}{$where};
           }
           # $kernel->delay( join => 15 => $where );
@@ -430,7 +430,7 @@ foreach my $server (get_names_by_type('irc')) {
               my $target = shift @targets;
               if ($_ eq "o") {
                 if ($set eq "+") {
-                  $heap->{users}{$location}{$target}{mode} .= "@"
+                  $heap->{users}{$location}{$target}{mode} .= '@'
                     unless $heap->{users}{$location}{$target}{mode} =~ /\@/;
                 }
                 else {
@@ -449,7 +449,7 @@ foreach my $server (get_names_by_type('irc')) {
         irc_disconnected => sub {
           my ($kernel, $heap, $server) = @_[KERNEL, HEAP, ARG0];
           print "Lost connection to server $server.\n";
-          clear_channels();
+          clear_channels($conf{name});
           delete $heap->{users};
           $kernel->delay( connect => 60 );
         },
@@ -457,7 +457,7 @@ foreach my $server (get_names_by_type('irc')) {
         irc_error => sub {
           my ($kernel, $heap, $error) = @_[KERNEL, HEAP, ARG0];
           print "Server error occurred: $error\n";
-          clear_channels();
+          clear_channels($conf{name});
           delete $heap->{users};
           $kernel->delay( connect => 60 );
         },
@@ -465,7 +465,7 @@ foreach my $server (get_names_by_type('irc')) {
         irc_socketerr => sub {
           my ($kernel, $heap, $error) = @_[KERNEL, HEAP, ARG0];
           print "IRC client ($server): socket error occurred: $error\n";
-          clear_channels();
+          clear_channels($conf{name});
           delete $heap->{users};
           $kernel->delay( connect => 60 );
         },

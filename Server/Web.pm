@@ -53,7 +53,7 @@ macro table_header (<header>) {
 sub httpd_session_started {
   my ( $heap,
        $socket, $remote_address, $remote_port,
-       $my_name, $my_host, $my_port, $my_ifname, $my_isrv, 
+       $my_name, $my_host, $my_port, $my_ifname, $my_isrv,
        $proxy, $my_iname,
      ) = @_[HEAP, ARG0..$#_];
 
@@ -228,7 +228,7 @@ sub httpd_session_got_query {
 
       # Goes as a separate block.
       if (length $channel) {
-        unless (grep $_ eq $channel, channels()) {
+        unless (grep $_ eq $channel, channels($heap->{my_isrv})) {
           $error =
             ( "<p><b><font size='+1' color='#800000'>" .
               "I'm not on $channel." .
@@ -406,7 +406,7 @@ sub httpd_session_got_query {
     # Dynamically build the channel options from the configuration
     # file's list.
 
-    my @tmpchans = channels();
+    my @tmpchans = channels($heap->{my_isrv});
     my @channels;
 
     # set default channel from request URL, if possible
