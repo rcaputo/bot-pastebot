@@ -357,9 +357,11 @@ sub httpd_session_got_query {
       @channels = @tmpchans;
     }
 
-    @channels = map { "<option value='\#$_'>\#$_" } @channels;
-    $channels[0] =~ s/\'\>\#/\' selected>\#/;
-    @channels = sort @channels;
+    if (@channels) {
+      @channels = map { "<option value='\#$_'>\#$_" } @channels;
+      $channels[0] =~ s/\'\>\#/\' selected>\#/;
+      @channels = sort @channels;
+    }
     unshift(@channels, "<option value=''>(none)");
 
     # Build content.

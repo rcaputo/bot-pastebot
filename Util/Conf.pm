@@ -121,6 +121,14 @@ while (<MPH>) {
     $section      = $1;
     $section_line = $.;
     undef %item;
+
+    # Pre-initialize any lists in the section.
+    while (my ($item_name, $item_flags) = each %{$define{$section}}) {
+      if ($item_flags & LIST) {
+        $item{$item_name} = [];
+      }
+    }
+
     next;
   }
 
