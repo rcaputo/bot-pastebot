@@ -30,7 +30,7 @@ sub PASTE_HOST    () { 5 }
 my $id_sequence = 0;
 my %paste_cache;
 my %ignores; # $ignores{$ircnet}{lc $channel} = [ mask, mask, ... ];
-my @channels;
+my %channels;
 
 # return a list of all paste ids
 
@@ -207,29 +207,25 @@ sub clear_channel_ignores {
 # Channels we're on
 
 sub channels {
-  return @channels;
+  return sort keys %channels;
 }
 
 sub clear_channels {
-  @channels = ();
-  return if @channels;  # Should never happen
+  %channels = ();
+  return if keys %channels;  # Should never happen
   return 1;
 }
 
 sub add_channel {
   my ($channel) = @_;
-  $channel = lc $channel;
-  return if grep $_ eq $channel, @channels;
-  return push @channels, $channel;
+  $channel = lc($channel);
+  $channels{$channel} = 1;
 }
 
 sub remove_channel {
   my ($channel) = @_;
-  $channel = lc $channel;
-  my $found = 0;
-  @channels = grep { $_ eq $channel ? do { $found++; 0; } : 1 } @channels;
-  return if not $found;
-  return $found;
+  $channel = lc($channel);
+  delete $channels{$channel};  # returns automatically
 }
 
 # Init stuff

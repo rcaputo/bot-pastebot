@@ -409,12 +409,18 @@ foreach my $server (get_names_by_type('irc')) {
           delete $heap->{users}{$where}{$nick};
         },
 
+        irc_join => sub {
+          my ($kernel, $who, $where) = @_[KERNEL, ARG0, ARG1];
+          my ($nick) = $who =~ /^([^!]+)/;
+          add_channel($where) if lc($nick) eq lc($conf{nick});
+        },
+
         # who reply
         irc_352 => sub {
           my ($kernel, $heap, $what) = @_[KERNEL, HEAP, ARG1];
 
           my @reply = split " ", $what, 8;
-          @{$heap->{users}{$reply[0]}{$reply[4]}}{qw(ident host mode real)} = 
+          @{$heap->{users}{$reply[0]}{$reply[4]}}{qw(ident host mode real)} =
             ($reply[1], $reply[2], $reply[5], $reply[7]);
         },
 
