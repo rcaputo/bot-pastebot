@@ -39,6 +39,24 @@ sub list_paste_ids {
   return keys %paste_cache;
 }
 
+
+{
+  my $store = '';      #  Static variable in pastestore()
+
+  sub pastestore {
+
+    # already set, return value
+
+    $store and return $store;
+
+    my @names = get_names_by_type('pastes');
+    return unless @names;
+    my %conf = get_items_by_name($names[0]);
+    $store = $conf{store};
+  }
+}
+
+
 # remove pastes that are too old (if applicable)
 sub check_paste_count {
   my @names = get_names_by_type('pastes');
@@ -70,9 +88,11 @@ sub store_paste {
     $ipaddress,   # PASTE_HOST
   ];
 
-  store \%paste_cache, 'pastestore/Index';
+  my $dir = pastestore();
 
-  open BODY, ">", "pastestore/$new_id"
+  store \%paste_cache, "$dir/Index";
+
+  open BODY, ">", "$dir/$new_id"
     or warn "I cannot store paste $new_id: $!";
   binmode(BODY);
   print BODY $paste;
@@ -88,7 +108,9 @@ sub fetch_paste {
   my $paste = $paste_cache{$id};
   return(undef, undef, undef) unless defined $paste;
 
-  unless(open BODY, "<", "pastestore/$id") {
+  my $dir = pastestore();
+
+  unless(open BODY, "<", "$dir/$id") {
     warn "Error opening paste $id: $!";
     return(undef, undef, undef);
   }
@@ -111,9 +133,13 @@ sub fetch_paste_channel {
 sub delete_paste_by_id {
   my $id = shift;
   delete $paste_cache{$id};
-  unlink "pastestore/$id"
+
+  my $dir = pastestore;
+
+  unlink "$dir/$id"
     or warn "Problem removing paste $id: $!";
-  store \%paste_cache, 'pastestore/Index';
+
+  store \%paste_cache, "$dir/Index";
 }
 
 # Delete a possibly sensitive or offensive paste.
@@ -121,12 +147,14 @@ sub delete_paste_by_id {
 sub delete_paste {
   my ($ircnet, $channel, $id, $bywho) = @_;
 
+  my $dir = pastestore();
+
   if (
     $paste_cache{$id}[PASTE_NETWORK] eq $ircnet &&
     $paste_cache{$id}[PASTE_CHANNEL] eq lc $channel
   ) {
     # place the blame where it belongs
-    unless (open BODY, ">", "pastestore/$id") {
+    unless (open BODY, ">", "$dir/$id") {
       warn "Error deleting body for paste $id: $!";
       return;
     }
@@ -235,9 +263,12 @@ sub remove_channel {
 
 # Init stuff
 
-mkdir "pastestore" unless -d "pastestore";
-if (-e "pastestore/Index") {
-  %paste_cache = %{retrieve 'pastestore/Index'};
+my $dir = pastestore();
+
+mkdir $dir unless -d $dir  or die "mkdir $dir failed $!";
+
+if (-e "$dir/Index") {
+  %paste_cache = %{retrieve "$dir/Index"};
   $id_sequence = (sort keys %paste_cache)[-1];
 }
 if (-e "ignorelist") {

@@ -4,6 +4,37 @@ DISTBUILD=$(DISTNAME)
 DISTTAR=$(DISTNAME).tar
 DISTTGZ=$(DISTTAR).gz
 
+DESTDIR	    =
+prefix      = $(DESTDIR)/usr
+exec_prefix = $(prefix)
+man_prefix  = $(prefix)/share
+sysconfdir  = $(DESTDIR)/etc
+datadir	    = $(prefix)/share
+
+INSTALL         = /usr/bin/install
+INSTALL_BIN     = -m 755
+INSTALL_DATA    = -m 644
+
+
+PACKAGE		= pastebot
+
+BINFILE         = $(PACKAGE)
+BINSRC          = $(PACKAGE).perl
+
+CONFSRC 	= $(PACKAGE).conf-dist
+CONFFILE	= $(PACKAGE).conf
+
+LIBSRC          = $(PACKAGE).lib.sample
+LIBFILE         = $(PACKAGE).lib
+
+BINDIR      = $(exec_prefix)/bin
+MANDIR      = $(man_prefix)/man/man1
+DATADIR     = $(datadir)/$(PACKAGE)
+PASTEDIR    = $(datadir)/$(PACKAGE)/pastestore
+ETCDIR	    = $(sysconfdir)/$(PACKAGE)
+
+TAR_OPT_EX  = --exclude=CVS --exclude=*[~\#] 
+
 dist: $(DISTTGZ)
 
 $(DISTTGZ): distdir
@@ -14,6 +45,51 @@ $(DISTTGZ): distdir
 	tar cf $(DISTTAR) $(DISTBUILD)
 	-perl -MExtUtils::Command -e rm_rf $(DISTBUILD)
 	gzip $(DISTTAR)
+
+install-cpan:
+	perl -MCPAN -e '\
+	@list = qw( \
+	HTTP::Request \
+	HTTP::Response \
+	HTTP::Status \
+        Perl::Tidy \
+	POE \
+	POE::Component::IRC \
+	Storable \
+	Text::Template \
+	Time::HiRes \
+	URI ); \
+	install $$_ for @list; \
+	'	
+
+install-etc:
+	$(INSTALL) $(INSTALL_DATA) -d $(ETCDIR)
+	if [ ! -d $(ETCDIR) ]; then exit 1; fi
+	@if [ -f $(ETCDIR)/$(LIBFILE) ]; then \
+	  echo "Not installing, file exists $(ETCDIR)/$(LIBFILE)"; \
+	else	\
+	  $(INSTALL) $(INSTALL_DATA) $(LIBSRC) $(ETCDIR)/$(LIBFILE); \
+	fi;
+	@if [ -f $(ETCDIR)/$(CONFFILE) ]; then \
+	  echo "Not installing, file exists $(ETCDIR)/$(CONFFILE)"; \
+	else	\
+	  $(INSTALL) $(INSTALL_DATA) $(CONFSRC) $(ETCDIR)/$(CONFFILE); \
+	fi;
+	echo "You may need to edit files in $(ETCDIR)"
+
+install-store:
+	$(INSTALL) $(INSTALL_DATA) -d $(PASTEDIR)
+
+install-lib: install-store
+	$(INSTALL) $(INSTALL_DATA) -d $(DATADIR)
+	if [ ! -d $(DATADIR) ]; then exit 1; fi
+	tar $(TAR_OPT_EX) -cf - * | (cd $(DATADIR); tar -xf -) && \
+
+install-bin: 
+	$(INSTALL) $(INSTALL_DATA) -d $(BINDIR)
+	$(INSTALL) $(INSTALL_BIN) $(BINSRC) $(BINDIR)/$(BINFILE)
+
+install: install-lib install-bin install-etc
 
 distdir:
 	-perl -MExtUtils::Command -e rm_rf $(DISTBUILD)

@@ -6,6 +6,23 @@ About
 
 To do.
 
+-------------
+Quick install
+-------------
+
+If you're the system administrator of Linux/Unix/Cygwin like machine,
+to install the package, use following commads. The first one can be
+left out if you already have all the required Perl modules.
+
+  make install-cpan
+  make install
+
+The default installation structure:
+
+  /etc/pastebot/	Configuration files
+  /usr/share/pastebot	Libraries
+  /usr/bin		executables	
+
 ------------
 Requirements
 ------------

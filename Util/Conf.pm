@@ -8,6 +8,7 @@ use strict;
 use Exporter;
 use Carp qw(croak);
 use Getopt::Std;
+use Env;
 
 use vars qw(@ISA @EXPORT %OPTS);
 @ISA    = qw(Exporter);
@@ -51,6 +52,7 @@ my %define =
       expire	=> SCALAR,
       count	=> SCALAR,
       throttle	=> SCALAR,
+      store     => SCALAR | REQUIRED,
     },
   );
 
@@ -78,8 +80,25 @@ sub flush_section {
 
 my %opts;
 getopts("f:", \%opts);
-my $cfile = $opts{"f"} || "./pastebot.conf";
-open(MPH, "<$cfile") or die $!;
+my $cfile = $opts{"f"}; 
+my $f = "pastebot.conf";
+my @conf  = ("./$f", "$HOME/$f", "/etc/pastebot/$f");
+
+unless ( $cfile ) {
+    for my $try ( @conf ) {
+	if ( -f $try ) {
+	    $cfile = $try;
+	    last;
+	}
+    }
+}
+
+unless ( $cfile  and  -f $cfile ) {
+    die "\n$0: Cannot read configuration file [$cfile], tried: @conf";
+}
+
+
+open(MPH, "<$cfile") or die "config file [$cfile] $!";
 while (<MPH>) {
   chomp;
   s/\s*\#.*$//;
