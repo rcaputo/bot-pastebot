@@ -30,7 +30,7 @@ sub PAGE_FOOTER () {
   ( "<div align=right><font size='-1'>" .
     "<a href='http://sf.net/projects/pastebot/'>Pastebot</a>" .
     " is powered by " .
-    "<a href='http://poe.perl.org/'>POE</a>."
+    "<a href='http://poe.perl.org/'>POE</a>.</font></div>"
   )
 }
 
