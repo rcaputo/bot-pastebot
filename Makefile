@@ -1,4 +1,4 @@
-VERSION=20040908
+VERSION=`date +%Y%m%d`
 DISTNAME=pastebot-$(VERSION)
 DISTBUILD=$(DISTNAME)
 DISTTAR=$(DISTNAME).tar
@@ -120,3 +120,6 @@ filecheck:
 
 mkmanifest:
 	@perl -MExtUtils::Manifest=mkmanifest -e 'mkmanifest()'
+
+tag:
+	cvs tag -Rc snap$(VERSION) .
