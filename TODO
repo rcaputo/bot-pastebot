@@ -201,6 +201,12 @@ Internal features.
 These features are not necessarily visible to end users, but they'll
 make visible changes easier.
 
+*** Make the bot a proper daemon.
+
+Do the daemonize thing so it runs stand-alone.
+
+Optionally have the daemon run as a specific user.
+
 *** User/mask tracking per channel.
 
 Have the bot grab a list of /names when it joins a channel.  It then
