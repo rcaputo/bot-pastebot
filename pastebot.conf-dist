@@ -71,9 +71,13 @@ irc
 	server	irc.homelien.no         6667
 	server	irc.efnet.pl            6667
 
-        # The nickname this client will use.
+        # The nickname[s] this client will use. If all in the list are
+        # taken some digits are appended, and it will try to reclaim one
+        # of the nicks in the list from time to time.
 
         nick      eatpaste
+#        nick      keinpaste
+#        nick      paste-it
 
         # The user name this client will advertise when connecting to
         # the network.
