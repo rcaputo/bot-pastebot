@@ -421,8 +421,10 @@ sub httpd_session_got_query {
     }
 
     if (@channels) {
-      @channels = map { "<option value='$_'>$_" } @channels;
       @channels = sort @channels;
+      @channels = map { "<option value='$_'>$_" } 
+	map html_encode($_), @channels;
+      $channels[0] =~ s/\'\>/\' selected="selected">/ if @channels == 1;
     }
     unshift(@channels, "<option value=''>(none)");
 
