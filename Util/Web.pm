@@ -117,14 +117,14 @@ sub static_response {
   else {
     $code = 500;
     $content =
-      ( "<html><head><title>YASd Error</title></head>" .
+      ( "<html><head><title>Template Error</title></head>" .
         "<body>Error opening $filename: $!</body></html>"
       );
   }
 
   my $content_is_okay = 1;
 
-  while ($content =~ /^(.*?)<<\s*([^<>\s]+)\s*(.*?)\s*>>(.*)$/s) {
+  while ($content =~ /^(.*?)\[\%\s*([^<>\s]+)\s*(.*?)\s*\%\](.*)$/s) {
     $content = $1;
     my ($tag, $markup, $right) = ($2, $3, $4);
     my %attribute;
