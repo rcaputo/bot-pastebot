@@ -14,14 +14,15 @@ Perl 5.005, but Perl 5.6.1 or newer is recommended.
 
 You'll need the following Perl modules.
 
-  Filter::Util::Call
-  Time::HiRes
-  POE
-  POE::Component::IRC
+  Filter::Util::Call    (comes with perl 5.8.1)
   HTTP::Request
   HTTP::Response
   HTTP::Status
+  POE
+  POE::Component::IRC
+  Storable              (comes with perl 5.8.1)
   Text::Template
+  Time::HiRes
   URI
 
   Perl::Tidy, which is part of perltidy, at http://perltidy.sf.net/

@@ -274,16 +274,6 @@ list.
 
 *** Make databases persistent.
 
-The ban list needs to be saved to disk, otherwise abusive people will
-have many opportunities to harass the bot and channels it's on.
-
-Persistent key database.  While paste keys will be temporary, it's
-important that they expire properly.  Restarting the bot should not
-wipe out all the unexpired keys.
-
-Persistent paste database.  Likewise, restarting the bot should not
-destroy unexpired pastes.
-
 User state tracking.  Probably with POE::Component::UserBase.
 
 Replace the web server code with POE::Component::Server::HTTP.
