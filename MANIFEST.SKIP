@@ -2,6 +2,11 @@
 \bCVS\b
 ~$
 ^pastebot.conf$
+^pastebot.conf-nopaste$
 /\.#
 ^\.#
 ^MANIFEST\.bak$
+\.swp$
+^CHANGES$
+\.orig$
+pastestore

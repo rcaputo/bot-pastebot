@@ -1,6 +1,6 @@
-CHANGES
 COPYRIGHT
 Client/IRC.pm
+Data/SQLite.pm
 MANIFEST
 MANIFEST.SKIP
 Makefile
@@ -10,6 +10,7 @@ TODO
 Util/Conf.pm
 Util/Data.pm
 Util/Web.pm
+data/nopaste.gif
 pastebot.conf-dist
 pastebot.perl
 templates/highlights.css
