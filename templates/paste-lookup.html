@@ -2,11 +2,11 @@
 <html>
   <head>
     <title>[% value name='bot_name' %] paste number [% value name='paste_id' %]...</title>
-    <link rel="stylesheet" type="text/css" href="/style">
+    <link rel="stylesheet" type="text/css" href="./style">
   </head>
   <body>
     <p>
-    <form method='get' action='/[% value name="paste_id" %]'>
+    <form method='get' action='./[% value name="paste_id" %]'>
       <input type='checkbox' name='tidy' [% value name='tidy' %]> Tidied up a bit.
       <input type='checkbox' name='hl' [% value name='hl' %]> Highlighted.
       <input type='checkbox' name='ln' [% value name='ln' %]> With line numbers.

@@ -16,7 +16,6 @@ pre {
 .cm { color: #800097;} /* comma */
 .co { color: #800097;} /* colon */
 
-
 .h  { color: #804848;} /* here-doc-target */
 .hh { color: #800000;} /* here-doc-text */
 .q  { color: #800000;} /* quote */
@@ -36,7 +35,6 @@ pre {
 .sc { color: #800080;} /* semicolon */
 
 .pu { color: #C44800;} /* punctuation */
-
 
 -->
 </style>
