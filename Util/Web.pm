@@ -8,6 +8,7 @@ package Util::Web;
 use strict;
 use vars qw(@ISA @EXPORT);
 
+use Text::Template;
 use Exporter;
 
 @ISA    = qw(Exporter);
@@ -124,86 +125,22 @@ sub static_response {
       );
   }
 
-  my $content_is_okay = 1;
+  my $template = Text::Template->new(
+    TYPE       => "FILE",
+    SOURCE     => $filename,
+    DELIMITERS => [ "[%", "%]" ],
+  );
 
-  while ($content =~ /^(.*?)\[\%\s*([^<>\s]+)\s*(.*?)\s*\%\](.*)$/s) {
-    $content = $1;
-    my ($tag, $markup, $right) = ($2, $3, $4);
-    my %attribute;
-    while ($markup =~ s/\s*(.*?)\s*=\s*([\'\"]?)(.*?)\2\s*//) {
-      $attribute{$1} = $3;
-    }
-
-    # Field labels change to reflect the status of their contents.
-
-    if ($tag eq 'label') {
-      my ($name, $flags, $text) = @attribute{'name', 'flags', 'text'};
-
-      my @badness_reasons;
-
-      # Field is required to contain non-whitespace.
-      if ($flags =~ /r/) {
-        unless ( defined($record) and
-                 exists($record->{$name}) and
-                 ($record->{$name} =~ /\S/)
-               ) {
-          push @badness_reasons, 'required';
-        }
-      }
-
-      # Field must match another field.  Used for passwords.
-      if ($flags =~ /\(m:(.*?)\)/) {
-        unless ( defined($record) and
-                 exists($record->{$name}) and
-                 exists($record->{$1}) and
-                 ($record->{$name} eq $record->{$1})
-               ) {
-          push @badness_reasons, "doesn't match";
-        }
-      }
-
-      # Field can get its reason from an external field.
-      if ($flags =~ /\(x:(.*?)\)/) {
-        if ( defined($record) and
-             exists($record->{$1})
-           ) {
-          push @badness_reasons, $record->{$1};
-        }
-      }
-
-      if (@badness_reasons) {
-        $content .=
-          ( "$text <font size='-1' color='#C02020'>(" .
-            join('/', @badness_reasons) .
-            ")</font>"
-          );
-        $content_is_okay = 0;
-      }
-      else {
-        $content .= "$text <font size='-1' color='#202080'>(ok)</font>";
-      }
-    }
-
-    # Replace value markers with values from the record.
-
-    elsif ($tag eq 'value') {
-      my $name = $attribute{name};
-      if (defined($record) and exists($record->{$name})) {
-        $content .= $record->{$name};
-      }
-    }
-
-    # Unknown meta-markup.
-
-    else {
-      $content .= "[ [$tag]";
-      foreach (sort keys %attribute) {
-        $content .= " [$_=$attribute{$_}]";
-      }
-      $content .= ' ] ';
-    }
-
-    $content .= $right;
+  if (defined $template) {
+    $code = 200;
+    $content = $template->fill_in(HASH => $record);
+  }
+  else {
+    $code = 500;
+    $content = (
+      "<html><head><title>Template Error</title></head>" .
+      "<body>Error opening $filename: $!</body></html>"
+    );
   }
 
   my $response = new HTTP::Response($code);
@@ -211,7 +148,7 @@ sub static_response {
   $response->content($content);
 
   if (wantarray()) {
-    return($content_is_okay, $response);
+    return(1, $response);
   }
   return $response;
 }
