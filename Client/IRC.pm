@@ -409,37 +409,99 @@ foreach my $server (get_names_by_type('irc')) {
         irc_join => sub {
           my ($kernel, $heap, $who, $where) = @_[KERNEL, HEAP, ARG0, ARG1];
           my ($nick) = $who =~ /^([^!]+)/;
-          add_channel($where) 
-            if lc $nick eq lc $conf{nick}->[$heap->{nick_index}];
+          if (lc $nick eq lc $conf{nick}->[$heap->{nick_index}]) {
+            add_channel($where);
+            $kernel->post( $server => who => $where );
+          }
+          @{$heap->{users}{$where}{$nick}}{qw(ident host)} = 
+            (split /[!@]/, $who, 8)[1, 2];
         },
 
         irc_kick => sub {
           my ($kernel, $heap, $who, $where, $nick, $reason)
             = @_[KERNEL, HEAP, ARG0..ARG3];
           print "$nick was kicked from $where by $who: $reason\n";
-          remove_channel($where) 
-            if lc $nick eq lc $conf{nick}->[$heap->{nick_index}];
+          delete $heap->{users}{$where}{$nick};
+          if (lc $nick eq lc $conf{nick}->[$heap->{nick_index}]) {
+            remove_channel($where);
+            delete $heap->{users}{$where};
+          }
           # $kernel->delay( join => 15 => $where );
         },
 
+        irc_quit => sub {
+          my ($kernel, $heap, $who, $what) = @_[KERNEL, HEAP, ARG0, ARG1];
+          
+          my ($nick) = $who =~ /^([^!]+)/;
+          for (keys %{$heap->{users}}) {
+            delete $heap->{users}{$_}{$nick};
+          }
+        },
+
+        irc_part => sub {
+          my ($kernel, $heap, $who, $where) = @_[KERNEL, HEAP, ARG0, ARG1];
+
+          my ($nick) = $who =~ /^([^!]+)/;
+          delete $heap->{users}{$where}{$nick};
+        },
+
+        # who reply
+        irc_352 => sub {
+          my ($kernel, $heap, $what) = @_[KERNEL, HEAP, ARG1];
+
+          my @reply = split " ", $what, 8;
+          @{$heap->{users}{$reply[0]}{$reply[4]}}{qw(ident host mode real)} = 
+            ($reply[1], $reply[2], $reply[5], $reply[7]);
+        },
+
+        irc_mode => sub {
+          my ($kernel, $heap, $issuer, $location, $modestr, @targets)
+            = @_[KERNEL, HEAP, ARG0..$#_];
+
+          my $set = "+";
+          for (split //, $modestr) {
+            $set = $_ if ($_ eq "-" or $_ eq "+");
+            if (/[bklovehI]/) { # mode has argument
+              my $target = shift @targets;
+              if ($_ eq "o") {
+                if ($set eq "+") {
+                  $heap->{users}{$location}{$target}{mode} .= "@"
+                    unless $heap->{users}{$location}{$target}{mode} =~ /\@/;
+                }
+                else {
+                  $heap->{users}{$location}{$target}{mode} =~ s/\@//;
+                }
+              }
+            }
+          }
+        },
+
+        # end of /names
+        irc_315 => sub {},
+        # end of /who
+        irc_366 => sub {},
+        
         irc_disconnected => sub {
-          my ($kernel, $server) = @_[KERNEL, ARG0];
+          my ($kernel, $heap, $server) = @_[KERNEL, HEAP, ARG0];
           print "Lost connection to server $server.\n";
           clear_channels();
+          delete $heap->{users};
           $kernel->delay( connect => 60 );
         },
 
         irc_error => sub {
-          my ($kernel, $error) = @_[KERNEL, ARG0];
+          my ($kernel, $heap, $error) = @_[KERNEL, HEAP, ARG0];
           print "Server error occurred: $error\n";
           clear_channels();
+          delete $heap->{users};
           $kernel->delay( connect => 60 );
         },
 
         irc_socketerr => sub {
-          my ($kernel, $error) = @_[KERNEL, ARG0];
+          my ($kernel, $heap, $error) = @_[KERNEL, HEAP, ARG0];
           print "IRC client ($server): socket error occurred: $error\n";
           clear_channels();
+          delete $heap->{users};
           $kernel->delay( connect => 60 );
         },
 
@@ -450,7 +512,7 @@ foreach my $server (get_names_by_type('irc')) {
           print "<$who:$where> $msg\n";
 
           $heap->{seen_traffic} = 1;
-
+          
           # Do something with input here?
         },
       },
