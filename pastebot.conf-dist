@@ -110,3 +110,22 @@ irc
         # particular machine.
 
         localaddr poe.perl.org
+
+pastes
+	# The code name for these pastes.
+
+	name	pasty
+
+	# Check pastes for expiry every check seconds (0 never checks)
+	# This sets it to 1 hour.
+
+	check	3600
+
+	# expire those pastes older than expire seconds (0 never expires)
+	# This sets it to 10 days.
+
+	expire	864000
+
+	# maximum number of pastes stored (0 allows infinite)
+
+	count	0
