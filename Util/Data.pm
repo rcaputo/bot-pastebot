@@ -7,11 +7,13 @@ package Util::Data;
 use strict;
 use Exporter;
 use Carp qw(croak);
+use POE;
+use Util::Conf;
 
 use vars  qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
-@EXPORT = qw( store_paste fetch_paste delete_paste
-              fetch_paste_channel clear_channel_ignores
+@EXPORT = qw( store_paste fetch_paste delete_paste list_paste_ids 
+              delete_paste_by_id fetch_paste_channel clear_channel_ignores
               set_ignore clear_ignore get_ignores is_ignored
             );
 
@@ -27,10 +29,31 @@ my $id_sequence = 0;
 my %paste_cache;
 my %ignores; # $ignores{$ircnet}{lc $channel} = [ mask, mask, ... ];
 
+# return a list of all paste ids
+
+sub list_paste_ids {
+   return keys %paste_cache;
+}
+
+# remove pastes that are too old (if applicable)
+sub check_paste_count {
+   my @names = get_names_by_type('pastes');
+   return unless @names;
+   my %conf = get_items_by_name($names[0]);
+   return unless %conf && $conf{'count'};
+   return if (scalar keys %paste_cache < $conf{'count'});
+   my $oldest = time;
+   for (keys %paste_cache) {
+      $oldest = $_ if $paste_cache{$_}->[PASTE_TIME] < $oldest;
+   }
+   delete $paste_cache{$oldest};
+}
+
 # Save paste, returning an ID.
 
 sub store_paste {
   my ($id, $summary, $paste, $ircnet, $channel, $ipaddress) = @_;
+  check_paste_count();
   my $new_id = ++$id_sequence;
   $paste_cache{$new_id} =
     [ time(),       # PASTE_TIME
@@ -61,6 +84,11 @@ sub fetch_paste {
 sub fetch_paste_channel {
   my $id = shift;
   return $paste_cache{$id}->[PASTE_CHANNEL];
+}
+
+sub delete_paste_by_id {
+   my $id = shift;
+  delete $paste_cache{$id};
 }
 
 # Delete a possibly sensitive or offensive paste.
@@ -143,6 +171,22 @@ sub clear_channel_ignores {
   $ignores{$ircnet}{lc $channel} = [];
 }
 
+my @pastes = get_names_by_type('pastes');
+if (@pastes) {
+   my %conf = get_items_by_name($pastes[0]);
+   if ($conf{'check'} && $conf{'expire'}) {
+      POE::Session->new(
+         _start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} );  },
+         ticks => sub { 
+            for (keys %paste_cache) {
+               next unless (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'};
+               delete $paste_cache{$_};
+            }
+            $_[KERNEL]->delay( ticks => $conf{'check'} );  
+         },
+      );
+   }
+}
 ### End.
 
 1;

@@ -7,8 +7,9 @@ package Util::Conf;
 use strict;
 use Exporter;
 use Carp qw(croak);
+use Getopt::Std;
 
-use vars qw(@ISA @EXPORT);
+use vars qw(@ISA @EXPORT %OPTS);
 @ISA    = qw(Exporter);
 @EXPORT = qw( get_names_by_type
               get_items_by_name
@@ -41,6 +42,13 @@ my %define =
       ccinfo    => SCALAR | REQUIRED,
       localaddr => SCALAR,
     },
+    pastes =>
+    { name      => SCALAR | REQUIRED,
+      check	=> SCALAR,
+      expire	=> SCALAR,
+      count	=> SCALAR,
+      throttle	=> SCALAR,
+    },
   );
 
 my ($section, $section_line, %item, %config);
@@ -65,7 +73,10 @@ sub flush_section {
   }
 }
 
-open(MPH, "<./pastebot.conf") or die $!;
+my %opts;
+getopts("f:", \%opts);
+my $cfile = $opts{"f"} || "./pastebot.conf";
+open(MPH, "<$cfile") or die $!;
 while (<MPH>) {
   chomp;
   s/\s*\#.*$//;
