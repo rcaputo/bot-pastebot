@@ -325,15 +325,22 @@ sub httpd_session_got_query {
 
     if (defined $paste) {
 
-      my $query = parse_content($params);
+      my $cookie = parse_cookie($request->headers->header('Cookie'));
+      my $query  = parse_content($params);
 
       ### Make the paste pretty.
 
-      my $ln   = is_true($query->{ln});
-      my $tidy = is_true($query->{tidy});
-      my $hl   = is_true($query->{hl});
-      my $tx   = is_true($query->{tx});
-      my $wr   = is_true($query->{wr});
+      my $ln   = exists $query ->{ln}   ? is_true($query ->{ln})   :
+                 exists $cookie->{ln}   ? is_true($cookie->{ln})   : 0;
+      my $tidy = exists $query ->{tidy} ? is_true($query ->{tidy}) :
+                 exists $cookie->{tidy} ? is_true($cookie->{tidy}) : 0;
+      my $hl   = exists $query ->{hl}   ? is_true($query ->{hl})   :
+                 exists $cookie->{hl}   ? is_true($cookie->{hl})   : 0;
+      my $tx   = exists $query ->{tx}   ? is_true($query ->{tx})   :
+                 exists $cookie->{tx}   ? is_true($cookie->{tx})   : 0;
+      my $wr   = exists $query ->{wr}   ? is_true($query ->{wr})   :
+                 exists $cookie->{wr}   ? is_true($cookie->{wr})   : 0;
+      my $store = is_true($query->{store});
 
       my $variants = [
 	['html', 1.000, 'text/html',  undef, 'us-ascii', 'en', undef],
@@ -368,6 +375,12 @@ sub httpd_session_got_query {
               wr       => ( $wr   ? "checked" : "" ),
             }
           );
+        if ($store) {
+          $response->push_header('Set-Cookie'=>cookie(tidy=>$tidy, $request));
+          $response->push_header('Set-Cookie' => cookie(hl => $hl, $request));
+          $response->push_header('Set-Cookie' => cookie(wr => $wr, $request));
+          $response->push_header('Set-Cookie' => cookie(ln => $ln, $request));
+        }
       }
 
       $heap->{wheel}->put( $response );

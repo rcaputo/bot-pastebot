@@ -28,12 +28,31 @@
    <div style="font-family:courier new; font-size=x-small">
     <a name="format"></a>
     <form method='get' action='[% $paste_id %]'>
-    <input type='checkbox' name='tx' [% $tx %]> plain text (suitable for cut and paste, <font color="red">overrides all</font>)<br><br>
-    <input type='checkbox' name='wr' [% $wr %]> word wrap (disables pre-formatted text wrapper)<br>
-    <input type='checkbox' name='ln' [% $ln %]> line numbers<br><br>
+    <input type='checkbox' id='tx' name='tx' [% $tx %]>
+    <label for='tx'>
+     plain text (suitable for cut and paste, <font color="red">overrides all</font>)
+    </label><br><br>
+    <input type='checkbox' id='wr' name='wr' [% $wr %]>
+    <label for='wr'>
+     word wrap (disables pre-formatted text wrapper)
+    </label><br>
+    <input type='checkbox' id='ln' name='ln' [% $ln %]>
+    <label for='ln'>
+     line numbers
+    </label><br><br>
     perl stuff:  (might be helpful for others but not perfect)<br>
-    <input type='checkbox' name='tidy' [% $tidy %]> tidy up a bit<br>
-    <input type='checkbox' name='hl' [% $hl %]> syntax highlight<br><br>
+    <input type='checkbox' id='tidy' name='tidy' [% $tidy %]>
+    <label for='tidy'>
+     tidy up a bit
+    </label><br>
+    <input type='checkbox' id='hl' name='hl' [% $hl %]> 
+    <label for='hl'>
+     syntax highlight
+    </label><br><br>
+    <input type='checkbox' id='store' name='store'>
+    <label for='store'>
+        store these preferences in a semi-permanent cookie
+    </label>
     <input type='submit' name='submit' value='Format it!'>
     </form>
    </div>

@@ -8,13 +8,14 @@ package Util::Web;
 use strict;
 use vars qw(@ISA @EXPORT);
 
+use CGI::Cookie;
 use Text::Template;
 use Exporter;
 
 @ISA    = qw(Exporter);
-@EXPORT = qw( url_decode url_encode parse_content static_response
+@EXPORT = qw( url_decode url_encode parse_content parse_cookie static_response
               dump_content dump_query_as_response base64_decode
-              html_encode is_true
+              html_encode is_true cookie
             );
 
 #------------------------------------------------------------------------------
@@ -35,6 +36,20 @@ for (my $ord = 0; $ord < 256; $ord++) {
   # Map hex codes (lower- and uppercase) to characters.
   $url_to_raw{    $hex } = $character;
   $url_to_raw{ uc $hex } = $character;
+}
+
+# Return a cookie string for a Set-Cookie header. The request argument is
+# used to figure out domain.
+sub cookie {
+  my ($name, $value, $request) = @_;
+
+  return CGI::Cookie->new(
+    -name => $name,
+    -value => $value,
+    -expires => '+36M',
+    -domain => (split /:/, $request->headers->header('Host'))[0],
+    -path => '/',
+  )->as_string;
 }
 
 # Decode url-encoded data.  This code was shamelessly stolen from
@@ -106,6 +121,15 @@ sub parse_content {
   return \%content;
 }
 
+# Parse a cookie string (found usually in the Cookie: header), returning a 
+# hashref containing cookies values, not CGI::Cookie objects.
+sub parse_cookie {
+  my ($cookie) = @_;
+
+  return {} if not defined $cookie;  
+  return { map url_decode($_), map /([^=]+)=?(.*)/s, split /; ?/, $cookie };
+}
+    
 # Generate a static response from a file.
 sub static_response {
   my ($filename, $record) = @_;
