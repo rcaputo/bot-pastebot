@@ -27,6 +27,7 @@ my %define =
       port    => SCALAR | REQUIRED,
       irc     => SCALAR | REQUIRED,
       proxy   => SCALAR,
+      iname   => SCALAR,
     },
     irc =>
     { name      => SCALAR | REQUIRED,
