@@ -136,6 +136,55 @@ sub httpd_session_got_query {
     return;
   }
 
+  ### Fetch some kind of data.
+
+  if ($url =~ m{^/(data/.+?)\s*$}) {
+    # TODO - Better path support.
+    my $filename = $1;
+    $filename =~ s/\.\.\/\///g;
+    $filename =~ s/\/+/\//g;
+
+    my ($code, $type, $content);
+
+    if (-e $filename) {
+      if (open(FILE, "<$filename")) {
+        $code = 200;
+        local $/;
+        $content = <FILE>;
+        close FILE;
+
+        # TODO - Better type support.
+        if ($filename =~ /\.(gif|jpe?g|png)$/i) {
+          $type = lc($1);
+          $type = "jpeg" if $type eq "jpg";
+          $type = "image/$1";
+        }
+      }
+      else {
+        $code = 500;
+        $type = "text/html";
+        $content = (
+          "<html><head><title>File Error</title></head>" .
+          "<body>Error opening $filename: $!</body></html>"
+        );
+      }
+    }
+    else {
+      $code = 404;
+      $type = "text/html";
+      $content = (
+        "<html><head><title>404 File Not Found</title></head>" .
+        "<body>File $filename does not exist.</body></html>"
+      );
+    }
+
+    my $response = HTTP::Response->new($code);
+    $response->push_header('Content-type', $type);
+    $response->content($content);
+    $heap->{wheel}->put( $response );
+    return;
+  }
+
   ### Store paste.
 
   if ($url =~ m,/paste$,) {
