@@ -7,6 +7,7 @@ use strict;
 package Server::Web;
 
 use Socket;
+use HTTP::Negotiate;
 use HTTP::Response;
 
 use POE::Session;
@@ -53,8 +54,8 @@ sub httpd_session_started {
   my ( $heap,
        $socket, $remote_address, $remote_port,
        $my_name, $my_host, $my_port, $my_ifname, $my_isrv, $my_chans,
-       $proxy,
-     ) = @_[HEAP, ARG0..ARG9];
+       $proxy, $my_iname,
+     ) = @_[HEAP, ARG0..$#_];
 
   # TODO: I think $my_host is obsolete.  Maybe it can be removed, and
   # $my_ifname can be used exclusively?
@@ -63,6 +64,7 @@ sub httpd_session_started {
   $heap->{my_port}  = $my_port;
   $heap->{my_name}  = $my_name;
   $heap->{my_inam}  = $my_ifname;
+  $heap->{my_iname} = $my_iname;
   $heap->{my_isrv}  = $my_isrv;
   $heap->{my_chans} = $my_chans;
   $heap->{my_proxy} = $proxy;
@@ -123,6 +125,9 @@ sub httpd_session_got_query {
 
   my $url = $request->url() . '';
 
+  # strip trailing / to prevent odd page errors
+  $url =~ s,//+$,/,;
+
   ### Fetch the highlighted style sheet.
 
   if ($url eq '/style') {
@@ -151,6 +156,13 @@ sub httpd_session_got_query {
 	  ($remote_addr) = split ',', $forwarded;
 	}
 	# else must be local
+      }
+
+      if (defined $heap->{my_iname}) {
+        my $forwarded = $request->headers->header('X-Forwarded-For');
+        if ($forwarded) {
+          ($heap->{remote_addr}) = split ',', $forwarded;
+        }
       }
 
       my $error = "";
@@ -222,9 +234,15 @@ sub httpd_session_got_query {
       my $id = store_paste( $nick, $html_summary, $paste,
                             $heap->{my_isrv}, $channel, $remote_addr
                           );
-      my $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
+      my $paste_link;
+      if (defined $heap->{my_iname}) {
+        $paste_link = $heap->{my_iname} . 
+          (($heap->{my_iname} =~ m,/$,) ? $id : "/$id");
+      } else {
+        $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
+      }
 
-      $paste = fix_paste($paste, 0, 0, 0);
+      $paste = fix_paste($paste, 0, 0, 0, 0);
 
       my $response =
         static_response( "templates/paste-answer.html",
@@ -253,7 +271,7 @@ sub httpd_session_got_query {
 
   ### Fetch paste.
 
-  if ($url =~ m!^/(\d+)(?:\?(.*?)\s*)?$!) {
+  if ($url =~ m{^/(\d+)(?:\?(.*?)\s*)?$}) {
     my ($num, $params) = ($1, $2);
     my ($nick, $summary, $paste) = fetch_paste($num);
 
@@ -267,8 +285,16 @@ sub httpd_session_got_query {
       my $tidy = is_true($query->{tidy});
       my $hl   = is_true($query->{hl});
       my $tx   = is_true($query->{tx});
+      my $wr   = is_true($query->{wr});
 
-      $paste = fix_paste($paste, $ln, $tidy, $hl) unless $tx;
+      my $variants = [
+	['html', 1.000, 'text/html',  undef, 'us-ascii', 'en', undef],
+	['text', 0.950, 'text/plain', undef, 'us-ascii', 'en', undef],
+      ];
+      my $choice = choose($variants, $request);
+      $tx = 1 if $choice && $choice eq 'text';
+
+      $paste = fix_paste($paste, $ln, $tidy, $hl, $wr) unless $tx;
 
       # Spew the paste.
 
@@ -291,6 +317,7 @@ sub httpd_session_got_query {
               hl       => ( $hl   ? "checked" : "" ),
               ln       => ( $ln   ? "checked" : "" ),
               tx       => ( $tx   ? "checked" : "" ),
+              wr       => ( $wr   ? "checked" : "" ),
             }
           );
       }
@@ -301,18 +328,35 @@ sub httpd_session_got_query {
 
     my $response = HTTP::Response->new(404);
     $response->push_header( 'Content-type', 'text/html' );
+    $response->content(
+      "<html>" .
+      "<head><title>Paste Not Found</title></head>" .
+      "<body><p>Paste not found.</p></body>" .
+      "</html>"
+    );
     $heap->{wheel}->put( $response );
     return;
   }
 
   ### Root page.
 
-  if ($url eq '/') {
+  if ($url =~ m,^/(\w+)?,) {
 
     # Dynamically build the channel options from the configuration
-    # file's list.  The first one is the default.
+    # file's list.
 
-    my @channels = @{$heap->{my_chans}};
+    my @tmpchans = @{$heap->{my_chans}};
+    my @channels;
+
+    # set default channel from request URL, if possible
+    my $prefchan = $1;
+    if ($prefchan) {
+      push @channels, grep { $_ eq $prefchan } @tmpchans;
+      push @channels, grep { $_ ne $prefchan } @tmpchans;
+    } else {
+      @channels = @tmpchans;
+    }
+
     @channels = map { "<option value='\#$_'>\#$_" } @channels;
     @channels = sort @channels;
     unshift(@channels, "<option value='' selected>(none)");
@@ -442,7 +486,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 
             [ @_[ARG0..ARG2], $server,
               $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-              $ircconf{channel}, $conf{proxy},
+              $ircconf{channel}, $conf{proxy}, $conf{iname},
             ],
           );
       },
@@ -452,7 +496,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 ### Fix paste for presentability.
 
 sub fix_paste {
-  my ($paste, $line_nums, $tidied, $highlighted) = @_;
+  my ($paste, $line_nums, $tidied, $highlighted, $wrapped) = @_;
 
   ### If the code is tidied, then tidy it.
 
@@ -523,7 +567,12 @@ sub fix_paste {
 
   # Buhbye.
 
-  return "<pre>$paste</pre>";
+  unless ($wrapped) {
+    substr($paste, 0, 0) = "<pre>";
+    $paste .= "</pre>";
+  }
+
+  return $paste;
 }
 
 #------------------------------------------------------------------------------
