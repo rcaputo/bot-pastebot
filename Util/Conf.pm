@@ -86,10 +86,10 @@ sub flush_section {
 
 my %opts;
 getopts("f:", \%opts);
-my $cfile = $opts{"f"}; 
+my $cfile = $opts{"f"};
 my $f = "pastebot.conf";
 my @conf  = (
-  "./$f", "$HOME/$f", "/etc/pastebot/$f", "/usr/local/etc/pastebot/$f"
+  "./$f", "$HOME/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
 );
 
 unless ( $cfile ) {

@@ -265,7 +265,13 @@ sub remove_channel {
 
 my $dir = pastestore();
 
-mkdir $dir unless -d $dir  or die "mkdir $dir failed $!";
+unless (-d $dir) {
+  use File::Path;
+  eval { mkpath $dir };
+  if ($@) {
+    die "Couldn't create directory $dir: $@";
+  }
+}
 
 if (-e "$dir/Index") {
   %paste_cache = %{retrieve "$dir/Index"};

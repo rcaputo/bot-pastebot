@@ -21,18 +21,18 @@ use Env;
 
 # Places where the libraries may be found.
 my @CONFIG_FILE = qw(
+   ./pastebot.lib
    $HOME/.pastebot.lib
    /etc/pastebot/pastebot.lib
    /usr/local/etc/pastebot/pastebot.lib
-   .
 );
 
 # Libraries we need.
 my @LIBS = qw(
-   Perl::Tidy
-   POE
-   Server::Web
    Client::IRC
+   POE
+   Perl::Tidy
+   Server::Web
 );
 
 sub Error ($ $) {
