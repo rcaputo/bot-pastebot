@@ -1,5 +1,18 @@
 $Id$
 
+---------------------------
+Migrating to a Real Tracker
+---------------------------
+
+This list is shrinking, but Real Work is not being done!  Rather, the
+missing ideas have been entered into Pastebot's trackers at
+SourceForge.  You can enter your favorite bug reports and wishes at
+http://sourceforge.net/projects/pastebot ... and you can keep track of
+the status of the project.
+
+If you're feeling adventurous, you can also submit patches and new
+features through the patch tracker.  We love your patches, yes we do!
+
 ------------------------------------
 Recent, Miscellaneous, Uncategorized
 ------------------------------------
@@ -155,17 +168,6 @@ on the channel and nick requesting keys through IRC.  This is a small
 convenience as a side effect of the larger inconvenience of using
 one-time keys.
 
-----------------------------
-Pretty up the web interface.
-----------------------------
-
-Replace the main page with a nice title/credits page.
-
-Add a browsable index of public (to-channel) pastes.  This could be
-construed as a security hole.
-
-Highlight different kinds of syntax; not just Perl.
-
 -------------
 Web accounts.
 -------------
@@ -181,13 +183,6 @@ Admin flags, so users can maintain the bot via the web.
 Having an authenticated web account means not needing to publish your
 IP address.
 
------------
-Admin list.
------------
-
-Keep a database of bot admins separate from channel ops.  This will be
-nontrivial.
-
 ---------------------
 Paste Via Form Upload
 ---------------------
@@ -197,13 +192,6 @@ upload via the form.
 
 Also let people download verbatim with a link/button, to circumvent
 crappy HTML renderers.
-
---------------
-Non-text Paste
---------------
-
-Allow images and things to be uploaded/pasted.  Requires "paste via
-form upload" and the ability to detect and/or specify content types.
 
 ---------------
 Paste Via Email
@@ -268,12 +256,6 @@ Internal features.
 
 These features are not necessarily visible to end users, but they'll
 make visible changes easier.
-
-*** Make the bot a proper daemon.
-
-Do the daemonize thing so it runs stand-alone.
-
-Optionally have the daemon run as a specific user.
 
 *** Make databases persistent.
 
