@@ -20,8 +20,9 @@ use Server::Web;
 my %helptext =
   (
    help => <<EOS,
-Commands: help, ignore, ignores, delete, about. Use help <command> for
-help on that command Other topics: about wildcards pasteids
+Commands: help, ignore, ignores, delete, about, uptime. Use help
+<command> for help on that command Other topics: about wildcards
+pasteids
 EOS
    ignore => <<EOS,
 Usage: ignore <wildcard> [<channels>] where <wildcard> is a wildcard
@@ -49,6 +50,10 @@ EOS
    pasteids => <<EOS,
 The digits in the paste URL after the host and port.  eg. in
 http://nopaste.snit.ch:8000/22 the pasteid is 22
+EOS
+   uptime => <<EOS,
+Display how long the program has been running and how much CPU it has
+consumed.
 EOS
   );
 
@@ -161,7 +166,7 @@ foreach my $server (get_names_by_type('irc')) {
 	    or $kernel->post($server => whois => $nick );
 	}
 	elsif ($msg =~ /^\s*ignores\s/) {
-	  unless ($msg =~ /^\s*ignores\s+(#\S+)\s*$/) {
+	  unless ($msg =~ /^\s*ignores\s+(\#\S+)\s*$/) {
 	    $kernel->post( $server => privmsg => $nick,
 			   "Usage: ignores <channel>");
 	    return;
@@ -191,6 +196,20 @@ foreach my $server (get_names_by_type('irc')) {
 	  @{$heap->{work}{lc $nick}} > 1
 	    or $kernel->post($server => whois => $nick );
 	}
+        elsif ($msg =~ /^\s*uptime\s*$/) {
+          my ($user_time, $system_time) = (times())[0,1];
+          my $wall_time = (time() - $^T) || 1;
+          my $load_average =
+            sprintf("%.4f", ($user_time+$system_time) / $wall_time);
+          $kernel->post
+            ( $server => privmsg => $nick,
+              "I was started on " . scalar(gmtime($^T)) . " GMT. " .
+              "I've been active for " . format_elapsed($wall_time, 2) . ". " .
+              sprintf( "I have used about %.2f%% of a CPU during my lifespan.",
+                       (($user_time+$system_time)/$wall_time) * 100
+                     )
+            );
+        }
       },
 
       irc_319 => sub {
@@ -377,6 +396,49 @@ foreach my $server (get_names_by_type('irc')) {
       },
     },
   );
+}
+
+# Helper function.  Display a number of seconds as a formatted period
+# of time.  NOT A POE EVENT HANDLER.
+
+sub format_elapsed {
+  my ($secs, $precision) = @_;
+  my @fields;
+
+  # If the elapsed time can be measured in weeks.
+  if (my $part = int($secs / 604800)) {
+    $secs %= 604800;
+    push(@fields, $part . 'w');
+  }
+
+  # If the remaining time can be measured in days.
+  if (my $part = int($secs / 86400)) {
+    $secs %= 86400;
+    push(@fields, $part . 'd');
+  }
+
+  # If the remaining time can be measured in hours.
+  if (my $part = int($secs / 3600)) {
+    $secs %= 3600;
+    push(@fields, $part . 'h');
+  }
+
+  # If the remaining time can be measured in minutes.
+  if (my $part = int($secs / 60)) {
+    $secs %= 60;
+    push(@fields, $part . 'm');
+  }
+
+  # If there are any seconds remaining, or the time is nothing.
+  if ($secs || !@fields) {
+    push(@fields, $secs . 's');
+  }
+
+  # Reduce precision, if requested.
+  pop(@fields) while $precision and @fields > $precision;
+
+  # Combine the parts.
+  join(' ', @fields);
 }
 
 #------------------------------------------------------------------------------
