@@ -203,10 +203,10 @@ sub httpd_session_got_query {
         $summary =~ s/\s+$//;
       }
 
-      $summary = html_encode($summary);
       $summary = "something" unless length $summary;
+      my $html_summary = html_encode($summary);
 
-      my $id = store_paste( $nick, $summary, $paste,
+      my $id = store_paste( $nick, $html_summary, $paste,
                             $heap->{my_isrv}, $channel, $heap->{remote_addr}
                           );
       my $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
