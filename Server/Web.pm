@@ -52,8 +52,9 @@ macro table_header (<header>) {
 sub httpd_session_started {
   my ( $heap,
        $socket, $remote_address, $remote_port,
-       $my_name, $my_host, $my_port, $my_ifname, $my_isrv, $my_chans
-     ) = @_[HEAP, ARG0..ARG8];
+       $my_name, $my_host, $my_port, $my_ifname, $my_isrv, $my_chans,
+       $proxy,
+     ) = @_[HEAP, ARG0..ARG9];
 
   # TODO: I think $my_host is obsolete.  Maybe it can be removed, and
   # $my_ifname can be used exclusively?
@@ -64,6 +65,7 @@ sub httpd_session_started {
   $heap->{my_inam}  = $my_ifname;
   $heap->{my_isrv}  = $my_isrv;
   $heap->{my_chans} = $my_chans;
+  $heap->{my_proxy} = $proxy;
 
   $heap->{remote_addr} = inet_ntoa($remote_address);
   $heap->{remote_port} = $remote_port;
@@ -140,10 +142,21 @@ sub httpd_session_got_query {
       defined $channel or $channel = "";
       $channel =~ tr[\x00-\x1F\x7F][]d;
 
+      my $remote_addr = $heap->{remote_addr};
+      if ($heap->{my_proxy} && $remote_addr eq $heap->{my_proxy}) {
+	# apache sets the X-Forwarded-For header to a list of the 
+	# IP addresses that were forwarded from/to
+	my $forwarded = $request->headers->header('X-Forwarded-For');
+	if ($forwarded) {
+	  ($remote_addr) = split ',', $forwarded;
+	}
+	# else must be local
+      }
+
       my $error = "";
       if (length $channel) {
         # See if it matches.
-        if (is_ignored($heap->{my_isrv}, $channel, $heap->{remote_addr})) {
+        if (is_ignored($heap->{my_isrv}, $channel, $remote_addr)) {
           $error =
             ( "<p><b><font size='+1' color='#800000'>" .
               "Your IP address has been blocked from pasting to $channel." .
@@ -179,7 +192,7 @@ sub httpd_session_got_query {
         $nick = "Someone";
       }
 
-      $nick .= " at $heap->{remote_addr}";
+      $nick .= " at $remote_addr";
 
       # <CanyonMan> how about adding a form field with a "Subject"
       # line ?
@@ -207,7 +220,7 @@ sub httpd_session_got_query {
       my $html_summary = html_encode($summary);
 
       my $id = store_paste( $nick, $html_summary, $paste,
-                            $heap->{my_isrv}, $channel, $heap->{remote_addr}
+                            $heap->{my_isrv}, $channel, $remote_addr
                           );
       my $paste_link = "http://$heap->{my_inam}:$heap->{my_port}/$id";
 
@@ -301,9 +314,8 @@ sub httpd_session_got_query {
 
     my @channels = @{$heap->{my_chans}};
     @channels = map { "<option value='\#$_'>\#$_" } @channels;
-    $channels[0] =~ s/\'\>\#/\' selected>\#/;
     @channels = sort @channels;
-    unshift(@channels, "<option value=''>(none)");
+    unshift(@channels, "<option value='' selected>(none)");
 
     # Build content.
 
@@ -430,7 +442,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 
             [ @_[ARG0..ARG2], $server,
               $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-              $ircconf{channel}
+              $ircconf{channel}, $conf{proxy},
             ],
           );
       },

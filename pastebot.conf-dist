@@ -32,6 +32,12 @@ web_server
 
         irc       efnet
 
+	# if you're using apache as a proxy to forward connections to 
+	# port 80 to some other port, put the IP address of the proxy
+	# here so we can dig through the headers to find the requester
+
+	# proxy 127.0.0.1
+
 # Define an IRC client.  Each "irc" section defines another client
 # that pastebot uses to connect to a network.  Each client may listen
 # on as many channels as its server allows.
