@@ -139,7 +139,7 @@ sub httpd_session_got_query {
 
   ### Store paste.
 
-  if ($url eq '/paste') {
+  if ($url =~ m,/paste$,) {
     my $content = parse_content($request->content());
 
     if (defined $content->{paste} and length $content->{paste}) {
@@ -358,8 +358,9 @@ sub httpd_session_got_query {
     }
 
     @channels = map { "<option value='\#$_'>\#$_" } @channels;
+    $channels[0] =~ s/\'\>\#/\' selected>\#/;
     @channels = sort @channels;
-    unshift(@channels, "<option value='' selected>(none)");
+    unshift(@channels, "<option value=''>(none)");
 
     # Build content.
 
