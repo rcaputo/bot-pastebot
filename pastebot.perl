@@ -3,6 +3,8 @@
 
 use strict;
 
+use lib '.';
+
 use POE;
 use Server::Web;
 use Client::IRC;
