@@ -69,6 +69,12 @@ Errors
   specified, the bot will try the next server in approximately one
   minute.
 
+* Can't locate [some module] in @INC (@INC contains: ...)
+
+  Somehow you managed to install one of pastebot's required modules
+  without installing a module it in turn needs.  You'll need to install
+  [some module] manually.
+
 -------
 Support
 -------
