@@ -235,32 +235,37 @@ sub httpd_session_got_query {
 
       ### Make the paste pretty.
 
-      my $ln = $query->{ln};
-      $ln = 0 unless $ln;
+      my $ln   = is_true($query->{ln});
+      my $tidy = is_true($query->{tidy});
+      my $hl   = is_true($query->{hl});
+      my $tx   = is_true($query->{tx});
 
-      my $tidy = $query->{tidy};
-      $tidy = 0 unless $tidy;
-
-      my $hl = $query->{hl};
-      $hl = 0 unless $hl;
-
-      my $paste = fix_paste($paste, $ln, $tidy, $hl);
+      $paste = fix_paste($paste, $ln, $tidy, $hl) unless $tx;
 
       # Spew the paste.
 
-      my $response =
-        static_response( "templates/paste-lookup.html",
-                         { bot_name => $heap->{my_name},
-                           paste_id => $num,
-                           nick     => $nick,
-                           summary  => $summary,
-                           paste    => $paste,
-                           footer   => PAGE_FOOTER,
-                           tidy     => ( $tidy ? "checked" : "" ),
-                           hl       => ( $hl ? "checked" : "" ),
-                           ln       => ( $ln ? "checked" : "" ),
-                         }
-                       );
+      my $response;
+      if ($tx) {
+        $response = HTTP::Response->new(200);
+        $response->push_header( 'Content-type', 'text/plain' );
+        $response->content($paste);
+      }
+      else {
+        $response = static_response
+          ( "templates/paste-lookup.html",
+            { bot_name => $heap->{my_name},
+              paste_id => $num,
+              nick     => $nick,
+              summary  => $summary,
+              paste    => $paste,
+              footer   => PAGE_FOOTER,
+              tidy     => ( $tidy ? "checked" : "" ),
+              hl       => ( $hl   ? "checked" : "" ),
+              ln       => ( $ln   ? "checked" : "" ),
+              tx       => ( $tx   ? "checked" : "" ),
+            }
+          );
+      }
 
       $heap->{wheel}->put( $response );
       return;
@@ -426,11 +431,13 @@ sub fix_paste {
 
   if ($tidied) {
     my $tidied = "";
-    Perl::Tidy::perltidy
-      ( source      => \$paste,
-        destination => \$tidied,
-        argv        => [ '-q', '-nanl', '-fnl' ],
-      );
+    eval {
+      Perl::Tidy::perltidy
+        ( source      => \$paste,
+          destination => \$tidied,
+          argv        => [ '-q', '-nanl', '-fnl' ],
+        );
+    };
     $paste = $tidied;
   }
 
