@@ -1,34 +1,49 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
   <head>
-    <title>[% $bot_name %] paste number [% $paste_id %]...</title>
-    <link rel="stylesheet" type="text/css" href="style">
+   <title>[% $bot_name %] paste from [% $nick %]...</title>
+   <link rel="stylesheet" type="text/css" href="style">
   </head>
-  <body>
-    <p>
+  <body bgcolor="#FFFFFF">
+   <table>
+    <tr>
+     <td>
+      <!-- Please copy this image to a host of your own and change this tag, thanks! -->
+      <img src="http://hydrogen.netlab.com/nopaste.gif" alt="POE Paste with lovely alien head...">
+     </td>
+     <td>
+      <div style="font-family:courier new">
+       <h1>No paste!</h1>
+       <b>from [% $nick %]</b><br>
+       <b>[% $summary %]</b><br><br>
+      </div>
+      <font face="courier new" size="-1">
+       <a href="#format">format options below</a>
+      </font>
+     </td>
+    </tr>
+   </table>
+   <div>
+    [% $paste %]
+   </div>
+   <div style="font-family:courier new; font-size=x-small">
+    <a name="format"></a>
     <form method='get' action='[% $paste_id %]'>
-      <input type='checkbox' name='tidy' [% $tidy %]> Tidied up a bit.
-      <input type='checkbox' name='hl' [% $hl %]> Highlighted.
-      <input type='checkbox' name='ln' [% $ln %]> With line numbers.
-      <br>
-      <input type='checkbox' name='tx' [% $tx %]> As plain text (overrides all others).
-      <br>
-      <input type='checkbox' name='wr' [% $wr %]> Wrapped (disables pre-formatted text wrapper).
-      <br>
-      <input type='submit' name='submit' value='Reformat it'>
+    <input type='checkbox' name='tx' [% $tx %]> plain text (suitable for cut and paste, <font color="red">overrides all</font>)<br><br>
+    <input type='checkbox' name='wr' [% $wr %]> word wrap (disables pre-formatted text wrapper)<br>
+    <input type='checkbox' name='ln' [% $ln %]> line numbers<br><br>
+    perl stuff:  (might be helpful for others but not perfect)<br>
+    <input type='checkbox' name='tidy' [% $tidy %]> tidy up a bit<br>
+    <input type='checkbox' name='hl' [% $hl %]> syntax highlight<br><br>
+    <input type='submit' name='submit' value='Format it!'>
     </form>
-    </p>
-    <p>
-      From: [% $nick %]
-      <br>
-      Summary: [% $summary %]
-    </p>
-    <p>
-      [% $paste %]
-    </p>
-    <p>
-      [% $footer %]
-      <!-- $Id$ -->
-    </p>
+   </div>
+   <div align="right">
+    <a href="http://validator.w3.org/check/referer"><img border="0" src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" height="31" width="88"></a><br><br>
+   </div>
+   <div>
+    [% $footer %]
+    <!-- $Id$ -->
+   </div>
   </body>
 </html>
