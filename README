@@ -21,6 +21,7 @@ You'll need the following Perl modules.
   HTTP::Request
   HTTP::Response
   HTTP::Status
+  Text::Template
   URI
 
   Perl::Tidy, which is part of perltidy, at http://perltidy.sf.net/
@@ -42,21 +43,22 @@ Apache users can use ProxyPass to map a directory on their port-80
 servers to a running pastebot.  This feature requires Apache be built
 with proxy support.
 
-Allow access to a /pastebot/ directory.  The directory should not
-exist.
+Create a virtual location for the proxy directory.
 
-  <Directory /pastebot/>
+  <Location /pastebot/>
     Order allow,deny
     Allow from all
     Deny from none
-  </Directory>
+  </Location>
 
 Tell Apache to forward any requests in the /pastebot/ directory
 through to the local pastebot process.
 
   ProxyPass  /pastebot/  http://127.0.0.1:8000/
 
-Now people can use pastebot on port 80.
+Now people can use pastebot on port 80.  Be sure to set the 'iname'
+configuration flag in the pastebot.conf web_server configuration section
+to hide the internal host/port values.
 
 ------
 Errors
