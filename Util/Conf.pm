@@ -60,6 +60,8 @@ my %define = (
 my ($section, $section_line, %item, %config);
 
 sub flush_section {
+  my $cfile = shift;
+
   if (defined $section) {
 
     foreach my $item_name (sort keys %{$define{$section}}) {
@@ -67,7 +69,7 @@ sub flush_section {
 
       if ($item_type & REQUIRED) {
         die(
-          "section `$section' ",
+          "conf error: section `$section' ",
           "requires item `$item_name' ",
           "at $cfile line $section_line\n"
         ) unless exists $item{$item_name};
@@ -75,8 +77,8 @@ sub flush_section {
     }
 
     die(
-      "section `$section' ",
-      "item `$item{name}' is redefined at $section_line\n"
+      "conf error: section `$section' ",
+      "item `$item{name}' is redefined at $cfile line $section_line\n"
     ) if exists $config{$item{name}};
 
     my $name = $item{name};
@@ -102,10 +104,12 @@ unless ( $cfile ) {
 }
 
 unless ( $cfile  and  -f $cfile ) {
-    die "\n$0: Cannot read configuration file [$cfile], tried: @conf";
+    die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
 }
 
-open(MPH, "<$cfile") or die "config file [$cfile] $!";
+open(MPH, "<$cfile") or
+    die "\nconf error: Cannot open configuration file [$cfile]: $!";
+
 while (<MPH>) {
   chomp;
   s/\s*\#.*$//;
@@ -115,12 +119,13 @@ while (<MPH>) {
   if (/^\s+(\S+)\s+(.*?)\s*$/) {
 
     die(
-      "cannot use an indented item ($1) outside of an unindented section ",
+      "conf error: ",
+      "can't use an indented item ($1) outside of an unindented section ",
       "at $cfile line $.\n"
     ) unless defined $section;
 
     die(
-      "item `$item' does not belong in section `$section' ",
+      "conf error: item `$1' does not belong in section `$section' ",
       "at $cfile line $.\n"
     ) unless exists $define{$section}->{$1};
 
@@ -129,7 +134,7 @@ while (<MPH>) {
         push @{$item{$1}}, $2;
       }
       else {
-        die "option $1 redefined at $cfile line $.\n";
+        die "conf error: option $1 redefined at $cfile line $.\n";
       }
     }
     else {
@@ -147,7 +152,7 @@ while (<MPH>) {
   if (/^(\S+)\s*$/) {
 
     # A new section ends the previous one.
-    &flush_section();
+    flush_section($cfile);
 
     $section      = $1;
     $section_line = $.;
@@ -163,10 +168,10 @@ while (<MPH>) {
     next;
   }
 
-  die "syntax error in $cfile at line $.\n";
+  die "conf error: syntax error in $cfile at line $.\n";
 }
 
-&flush_section();
+flush_section($cfile);
 
 close MPH;
 

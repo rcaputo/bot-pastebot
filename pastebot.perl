@@ -35,21 +35,6 @@ my @LIBS = qw(
    Server::Web
 );
 
-sub Error ($ $) {
-    my ($lib, $msg) = @_;
-
-    $msg =~ s/ in \@INC.*//s;
-
-    my $liberr = << "EOF";
-$0 Error while loading $lib: $msg
-Please make sure that the following libraries
-have been installed:
-@LIBS
-EOF
-
-    die "While loading library [$lib]\n$liberr";
-}
-
 sub LoadLibraries () {
     push @INC, dirname $0;
 
@@ -64,10 +49,34 @@ sub LoadLibraries () {
     for my $lib ( @LIBS ) {
 	eval "use $lib;" ;
 
-	$@ and Error($lib, $@);
+        next unless $@;
+
+        if ($@ =~ /Can't locate (\S+) in \@INC/) {
+          die "Can't find library $1.  Please ensure it is installed.\n";
+        }
+
+        if ($@ =~ /(conf error: .*? line \d+)/) {
+          die "$1\n";
+        }
+
+        die;
     }
 }
 
 LoadLibraries();
 POE::Kernel->run();
 exit 0;
+
+sub HELP_MESSAGE {
+  my $output = shift;
+
+  print $output "usage:\n";
+  print $output "  $0             (use pastebot.conf for configuration)\n";
+  print $output "  $0 -f filename (read a particular configuration file)\n";
+  exit;
+}
+
+sub VERSION_MESSAGE {
+  my $output = shift;
+  print $output "$0 development snapshot\n";
+}
