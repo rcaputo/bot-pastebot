@@ -1,6 +1,14 @@
 $Id$
 
 ----------
+????-??-??
+----------
+
+Rocco made (none) the default channel to paste to, rather than the
+last one.  People from #C++ could not read the directions, so
+#perlhelp were getting spammed with paste notices.
+
+----------
 2002-06-08
 ----------
 

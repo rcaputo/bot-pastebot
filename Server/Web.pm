@@ -288,7 +288,7 @@ sub httpd_session_got_query {
     @channels = map { "<option value='\#$_'>\#$_" } @channels;
     $channels[0] =~ s/\'\>\#/\' selected>\#/;
     @channels = sort @channels;
-    push(@channels, "<option value=''>(none)");
+    unshift(@channels, "<option value=''>(none)");
 
     # Build content.
 
