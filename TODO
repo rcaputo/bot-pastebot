@@ -117,6 +117,23 @@ Admin list.
 Keep a database of bot admins separate from channel ops.  This will be
 nontrivial.
 
+---------------------
+Paste Via Form Upload
+---------------------
+
+Add a standard "Browse" button and filename field, and let people
+upload via the form.
+
+Also let people download verbatim with a link/button, to circumvent
+crappy HTML renderers.
+
+--------------
+Non-text Paste
+--------------
+
+Allow images and things to be uploaded/pasted.  Requires "paste via
+form upload" and the ability to detect and/or specify content types.
+
 ---------------
 Paste Via Email
 ---------------

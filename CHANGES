@@ -30,6 +30,16 @@ and pasted into an editor would appear as one jumbled line.  Rocco
 removed the code to make <br> tags out of newlines, and he also
 removed the &nbsp; code.  That wasn't needed in <pre></pre> either.
 
+Rocco added feedback from coral and kane and android18 to the TODO
+list.
+
+kane and coral suggested a way to render paste in plain text.  Rocco
+added that.
+
+Rocco added an is_true() function to Utils/Web.pm.  It determines
+whether a boolean value is true or not, reducing many forms of truth
+and falsity to 1 and 0.
+
 ----------
 2002-05-07
 ----------
