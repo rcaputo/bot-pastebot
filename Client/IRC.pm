@@ -147,6 +147,9 @@ foreach my $server (get_names_by_type('irc')) {
 
           my ($nick) = $sender =~ /^([^!]+)/;
           print "Message $msg from $nick\n";
+
+          $msg = remove_colors($msg);
+
           if ($msg =~ /^\s*help(?:\s+(\w+))?\s*$/) {
             my $what = $1 || 'help';
             if ($helptext{$what}) {
@@ -487,6 +490,7 @@ foreach my $server (get_names_by_type('irc')) {
           $heap->{seen_traffic} = 1;
 
           # Do something with input here?
+          # If so, remove colors from it first.
         },
       },
     );
@@ -533,6 +537,19 @@ sub format_elapsed {
 
   # Combine the parts.
   join(' ', @fields);
+}
+
+# Helper functions.  Remove color codes from a message.
+
+sub remove_colors {
+  my $msg = shift;
+
+  # Indigoid supplied these regexps to extract colors.
+  $msg =~ s/[\x02\x0F\x11\x12\x16\x1d\x1f]//g;    # Regular attributes.
+  $msg =~ s/\x03[0-9,]*//g;                       # mIRC colors.
+  $msg =~ s/\x04[0-9a-f]+//ig;                    # Other colors.
+
+  return $msg;
 }
 
 #------------------------------------------------------------------------------
