@@ -59,13 +59,6 @@ Plan of action.
      Build an URL from the %conf records associated with the network
      and channel where the bot heard the trigger.
 
-----------------------------
-Nickname dispute resolution.
-----------------------------
-
-If the chosen nickname is taken, pick another.  When the desired
-nickname becomes available again, reclaim it.
-
 -----------------
 Time-limited keys
 -----------------
@@ -265,12 +258,6 @@ make visible changes easier.
 Do the daemonize thing so it runs stand-alone.
 
 Optionally have the daemon run as a specific user.
-
-*** User/mask tracking per channel.
-
-Have the bot grab a list of /names when it joins a channel.  It then
-watches as users join, part, quit, or are kicked and manages that
-list.
 
 *** Make databases persistent.
 

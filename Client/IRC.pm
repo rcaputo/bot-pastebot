@@ -167,14 +167,40 @@ foreach my $server (get_names_by_type('irc')) {
                 "Invalid wildcard.  Try: help wildcards");
               return;
             }
-
-            # save it for later
-            push(@{$heap->{work}{lc $nick}},
-              [ ignore => $mask => $channels ]);
-
-            # only for chanops - find out where they are
-            @{$heap->{work}{lc $nick}} > 1
-              or $kernel->post($server => whois => $nick );
+            my @igchans;
+            if ($channels) {
+              @igchans = split ',', lc $channels;
+            }
+            else {
+              @igchans = map lc, channels();
+            }
+            # only the channels the user is an operator on
+            @igchans = grep {exists $heap->{users}{$_}{$nick}{mode} and
+                             $heap->{users}{$_}{$nick}{mode} =~ /@/} @igchans;
+            @igchans or return;
+            if ($mask eq '-') {
+              for my $chan (@igchans) {
+                clear_channel_ignores($conf{name}, $chan);
+                print "Nick '$nick' deleted all ignores on $chan\n";
+              }
+              $kernel->post( $server => privmsg => $nick =>
+                "Removed all ignores on @igchans");
+            }
+            elsif ($mask =~ /^-(.*)$/) {
+              my $clearmask = $1;
+              for my $chan (@igchans) {
+                clear_ignore($conf{name}, $chan, $clearmask);
+              }
+              $kernel->post( $server => privmsg => $nick =>
+                "Removed ignore $clearmask on @igchans");
+            }
+            else {
+              for my $chan (@igchans) {
+                set_ignore($conf{name}, $chan, $mask);
+              }
+              $kernel->post( $server => privmsg => $nick =>
+                "Added ignore mask $mask on @igchans");
+            }
           }
           elsif ($msg =~ /^\s*ignores\s/) {
             unless ($msg =~ /^\s*ignores\s+(\#\S+)\s*$/) {
@@ -200,12 +226,27 @@ foreach my $server (get_names_by_type('irc')) {
                 "Usage: delete <pasteid>");
               return;
             }
+            my $pasteid = $1;
+            my $paste_chan = fetch_paste_channel($pasteid);
 
-            # save it for later
-            push(@{$heap->{work}{lc $nick}}, [ delete => $1 ]);
-
-            @{$heap->{work}{lc $nick}} > 1
-              or $kernel->post($server => whois => $nick );
+            if (defined $paste_chan) {
+              if ($heap->{users}{$paste_chan}{$nick}{mode} =~ /@/) {
+                delete_paste($conf{name}, $paste_chan, $pasteid, $nick)
+                  or print "It didn't delete!\n";
+                $kernel->post( $server => privmsg => $nick =>
+                  "Deleted paste $pasteid")
+              }
+              else {
+                $kernel->post( $server => privmsg => $nick =>
+                  "Paste $pasteid was sent to $paste_chan - " .
+                  "you aren't a channel operator on $paste_chan"
+                )
+              }
+            }
+            else {
+              $kernel->post( $server => privmsg => $nick =>
+                "No such paste")
+            }
           }
           elsif ($msg =~ /^\s*uptime\s*$/) {
             my ($user_time, $system_time) = (times())[0,1];
@@ -221,83 +262,6 @@ foreach my $server (get_names_by_type('irc')) {
                        )
               );
           }
-        },
-
-        irc_319 => sub {
-          my ($kernel, $heap, $msg) = @_[KERNEL, HEAP, ARG1];
-
-          my ($nick, $channels) = split ' ', $msg, 2;
-          $channels =~ s/^://;
-          my @channels = grep /^@/, split ' ', lc $channels;
-          s/^@// for @channels;
-          my %channels = map { $_, $_ } @channels;
-
-          my $work = delete $heap->{work}{lc $nick};
-          for my $job (@$work) {
-            my $action = shift @$job;
-            if ($action eq 'ignore') {
-              my ($mask, $channels) = @$job;
-              my @igchans;
-              if ($channels) {
-                @igchans = split ',', lc $channels;
-              }
-              else {
-                @igchans = map "#\L$_", @{$conf{channel}};
-              }
-              # only the channels the user is an operator on
-              @igchans = grep $channels{$_}, @igchans;
-              @igchans or next;
-              if ($mask eq '-') {
-                for my $chan (@igchans) {
-                  clear_channel_ignores($conf{name}, $chan);
-                  print "Nick '$nick' deleted all ignores on $chan\n";
-                }
-                $kernel->post( $server => privmsg => $nick =>
-                  "Removed all ignores on @igchans");
-              }
-              elsif ($mask =~ /^-(.*)$/) {
-                my $mask = $1;
-                for my $chan (@igchans) {
-                  clear_ignore($conf{name}, $chan, $mask);
-                }
-                $kernel->post( $server => privmsg => $nick =>
-                  "Removed ignore $mask on @igchans");
-              }
-              else {
-                for my $chan (@igchans) {
-                  set_ignore($conf{name}, $chan, $mask);
-                }
-                $kernel->post( $server => privmsg => $nick =>
-                  "Added ignore mask $mask on @igchans");
-              }
-            }
-            elsif ($action eq 'delete') {
-              my $paste_chan = fetch_paste_channel($job->[0]);
-
-              if (defined $paste_chan) {
-                if ($channels{lc $paste_chan}) {
-                  delete_paste($conf{name}, $paste_chan, $job->[0], $nick)
-                    or print "It didn't delete!\n";
-                  $kernel->post( $server => privmsg => $nick =>
-                    "Deleted paste $job->[0]")
-                }
-                else {
-                  $kernel->post( $server => privmsg => $nick =>
-                    "Paste $job->[0] was sent to $paste_chan - " .
-                    "you aren't a channel operator on $paste_chan"
-                  )
-                }
-              }
-              else {
-                $kernel->post( $server => privmsg => $nick =>
-                  "No such paste")
-              }
-            }
-            else {
-              print "Unknown action $action\n";
-            }
-          }
-
         },
 
         # negative on /whois
@@ -512,7 +476,7 @@ foreach my $server (get_names_by_type('irc')) {
           print "<$who:$where> $msg\n";
 
           $heap->{seen_traffic} = 1;
-          
+
           # Do something with input here?
         },
       },
