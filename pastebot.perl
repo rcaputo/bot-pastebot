@@ -38,9 +38,7 @@ my @LIBS = qw(
 sub Error ($ $) {
     my ($lib, $msg) = @_;
 
-    if ( $msg =~ "\@INC" ) {
-	 $msg = $lib;
-    }
+    $msg =~ s/ in \@INC.*//s;
 
     my $liberr = << "EOF";
 $0 Error while loading $lib: $msg
@@ -66,10 +64,9 @@ sub LoadLibraries () {
     for my $lib ( @LIBS ) {
 	eval "use $lib;" ;
 
-	$@ and Error $lib, $@;
+	$@ and Error($lib, $@);
     }
 }
-
 
 LoadLibraries();
 POE::Kernel->run();

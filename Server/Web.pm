@@ -139,10 +139,10 @@ sub httpd_session_got_query {
   ### Fetch some kind of data.
 
   if ($url =~ m{^/(data/.+?)\s*$}) {
-    # TODO - Better path support.
+    # TODO - Better path support?
     my $filename = $1;
-    $filename =~ s/\.\.\/\///g;
-    $filename =~ s/\/+/\//g;
+    $filename =~ s{/\.+}{/}g;  # Remove ., .., ..., etc.
+    $filename =~ s{/+}{/}g;    # Combine // into /
 
     my ($code, $type, $content);
 
