@@ -139,6 +139,21 @@ Admin list.
 Keep a database of bot admins separate from channel ops.  This will be
 difficult.
 
+---------------
+Paste Via Email
+---------------
+
+This could be done now with a simple mail gateway, but there's
+considerations with being able to block access.
+
+Ideally it would unwrap attachments (maybe just the first attachment)
+if any and paste that rather than just pasting the source of the mail.
+
+It should be possible to block abuses in such a way that attempts to
+forge the From line fail.
+
+Suggested by Uri on Magnet #perl.
+
 -------------------
 Paste via DCC chat.
 -------------------
