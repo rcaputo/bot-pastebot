@@ -1,5 +1,21 @@
 $Id$
 
+------------------------------------
+Recent, Miscellaneous, Uncategorized
+------------------------------------
+
+This section is generic notes from discussions with other developers.
+
+Yaakov implemented a requested feature: A hit counter for each paste,
+so posters can see if anybody has looked at their posts.  The obvious
+extension is to discount views from the poster's address.  That way
+they don't need to count clicks and subtract things in their heads.
+
+There is a large list of source code beautifiers at
+<http://www.softpanorama.org/Tools/beautifiers.shtml>.  Perhaps one or
+more of them may be used to beautify/highlight languages other than
+Perl.
+
 ------------
 Yaakov Ideas
 ------------
