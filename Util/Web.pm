@@ -13,7 +13,7 @@ use Exporter;
 @ISA    = qw(Exporter);
 @EXPORT = qw( url_decode url_encode parse_content static_response
               dump_content dump_query_as_response base64_decode
-              html_encode
+              html_encode is_true
             );
 
 #------------------------------------------------------------------------------
@@ -82,7 +82,9 @@ sub parse_content {
   my $content = shift;
   my %content;
 
-  foreach (split(/[&;]/, $content)) {
+  return \%content unless defined $content and length $content;
+
+  foreach (split(/[\&\;]/, $content)) {
     my ($param, $value) = split(/=/, $_, 2);
     $param = &url_decode($param);
     $value = &url_decode($value);
@@ -260,6 +262,21 @@ sub base64_decode {
     $data = unpack 'u', chr(32 + (0.75 * length($data))) . $data;
   }
   return $data;
+}
+
+# Determine if a checkbox/radio thingy is true.
+
+my %bool =
+  ( 1 => 1, t => 1, y => 1, yes => 1, da => 1, si => 1, on => 1,
+    0 => 0, f => 0, n => 0, no  => 0, nyet => 0, off => 0,
+  );
+
+sub is_true {
+  my $value = shift;
+  return 0 unless defined $value and length $value;
+  $value = lc($value);
+  return $bool{$value} if exists $bool{$value};
+  return 0;
 }
 
 #------------------------------------------------------------------------------
