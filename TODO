@@ -96,12 +96,7 @@ Replace the main page with a nice title/credits page.
 Add a browsable index of public (to-channel) pastes.  This could be
 construed as a security hole.
 
-Add syntax highlighting.  This assumes a particular kind of paste,
-though.  Maybe also add a field for "language type" and highlight
-syntax (or not) accordingly.
-
-Code beautification.  Some people post really nasty stuff.  Have the
-option to make it prettier.
+Highlight different kinds of syntax; not just Perl.
 
 -------------
 Web accounts.
@@ -115,29 +110,12 @@ this.
 
 Admin flags, so users can maintain the bot via the web.
 
-----------
-Ban lists.
-----------
-
-Abusive people exist.  Have the ability to ban people from using the
-bot through a number of tried-and-true methods.
-
-  /msg [bot] ban [nick]
-  /msg [bot] ban [*!*@* mask]
-
-  /msg [bot] unban [nick]
-  /msg [bot] unban [*!*@* mask]
-
-  /msg [bot] bans [*!*@* mask]
-
-Also perhaps add a web interface to the bans list.
-
 -----------
 Admin list.
 -----------
 
 Keep a database of bot admins separate from channel ops.  This will be
-difficult.
+nontrivial.
 
 ---------------
 Paste Via Email

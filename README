@@ -23,6 +23,8 @@ You'll need the following Perl modules.
   HTTP::Status
   URI
 
+  Perl::Tidy, which is part of perltidy, at http://perltidy.sf.net/
+
 ----------
 Setting up
 ----------
