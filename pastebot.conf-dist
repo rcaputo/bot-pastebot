@@ -155,3 +155,8 @@ pastes
 	# maximum number of pastes stored (0 allows infinite)
 
 	count	0
+
+	# where to store the pastes
+
+	store	pastestore
+
