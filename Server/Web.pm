@@ -457,15 +457,20 @@ sub fix_paste {
   ### If the code is tidied, then tidy it.
 
   if ($tidied) {
-    my $tidied = "";
+    my $tidy_version = "";
     eval {
       Perl::Tidy::perltidy
         ( source      => \$paste,
-          destination => \$tidied,
+          destination => \$tidy_version,
           argv        => [ '-q', '-nanl', '-fnl' ],
         );
     };
-    $paste = $tidied;
+    if ($@) {
+      $paste = "Could not tidy this paste (try turning tidying off): $@";
+    }
+    else {
+      $paste = $tidy_version;
+    }
   }
 
   ### If the code is to be highlighted, then highlight it.
@@ -474,13 +479,19 @@ sub fix_paste {
     my @html_args = qw( -q -html -pre );
     push @html_args, "-nnn" if $line_nums;
 
-    my $html = "";
-    Perl::Tidy::perltidy
-      ( source      => \$paste,
-        destination => \$html,
-        argv        => \@html_args,
-      );
-    return $html;
+    my $highlighted = "";
+    eval {
+      Perl::Tidy::perltidy
+        ( source      => \$paste,
+          destination => \$highlighted,
+          argv        => \@html_args,
+        );
+    };
+    if ($@) {
+      $highlighted =
+        "Could not highlight the paste (try turning highlighting off): $@";
+    }
+    return $highlighted;
   }
 
   ### Code's not highlighted.  HTML escaping time.  Forgive me.
