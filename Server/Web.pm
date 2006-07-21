@@ -38,7 +38,7 @@ template table_method (<header>) {
   "<tr><td><header></td><td>" . $request-><header>() . "</td></tr>"
 }
 
-macro table_header (<header>) {
+template table_header (<header>) {
   "<tr><td><header></td><td>" . $request->header('<header>') . "</td></tr>"
 }
 
