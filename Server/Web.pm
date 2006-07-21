@@ -9,9 +9,9 @@ package Server::Web;
 use Socket;
 use HTTP::Negotiate;
 use HTTP::Response;
+use Filter::Template;
 
 use POE::Session;
-use POE::Preprocessor;
 use POE::Component::Server::TCP;
 use POE::Filter::HTTPD;
 
@@ -34,7 +34,7 @@ sub PAGE_FOOTER () {
   )
 }
 
-macro table_method (<header>) {
+template table_method (<header>) {
   "<tr><td><header></td><td>" . $request-><header>() . "</td></tr>"
 }
 
@@ -355,8 +355,8 @@ sub httpd_session_got_query {
       my $store = is_true($query->{store});
 
       my $variants = [
-	['html', 1.000, 'text/html',  undef, 'us-ascii', 'en', undef],
-	['text', 0.950, 'text/plain', undef, 'us-ascii', 'en', undef],
+        ['html', 1.000, 'text/html',  undef, 'us-ascii', 'en', undef],
+        ['text', 0.950, 'text/plain', undef, 'us-ascii', 'en', undef],
       ];
       my $choice = choose($variants, $request);
       $tx = 1 if $choice && $choice eq 'text';
