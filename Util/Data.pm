@@ -285,15 +285,17 @@ my @pastes = get_names_by_type('pastes');
 if (@pastes) {
   my %conf = get_items_by_name($pastes[0]);
   if ($conf{'check'} && $conf{'expire'}) {
-    POE::Session->new(
-      _start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} ); },
-      ticks => sub {
-        for (keys %paste_cache) {
-          next unless (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'};
-          delete_paste_by_id($_);
-        }
-        $_[KERNEL]->delay( ticks => $conf{'check'} );
-      },
+    POE::Session->create(
+			inline_states => {
+				_start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} ); },
+				ticks => sub {
+					for (keys %paste_cache) {
+						next unless (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'};
+						delete_paste_by_id($_);
+					}
+					$_[KERNEL]->delay( ticks => $conf{'check'} );
+				},
+			},
     );
   }
 }
