@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: pastebot.perl 96 2004-11-01 16:08:42Z rcaputo $
+# $Id$
 
 use strict;
 use lib '.';
