@@ -1,0 +1,146 @@
+$Id: README 88 2004-09-08 15:10:40Z rcaputo $
+
+-----
+About
+-----
+
+Pastebot is a web-based dropbox for small texts.  On the one hand, it
+is a web server, accepting "pastes" from one person to share with
+others.  On the other hand, it is an IRC bot that announces paste URLs
+on appropriate channels.
+
+-------------
+Quick install
+-------------
+
+If you're the system administrator for your machine, you can install
+all the necessary modules with
+
+  make install-cpan
+  make install
+
+The default installation structure:
+
+  /usr/local/etc/pastebot/      Configuration files
+  /usr/local/share/pastebot     Libraries
+  /usr/local/bin                Executables
+
+------------
+Requirements
+------------
+
+Perl 5.005, but Perl 5.6.1 or newer is recommended.
+
+You'll need the following Perl modules.
+
+  Filter::Util::Call    (comes with perl 5.8.1)
+  HTTP::Request
+  HTTP::Response
+  HTTP::Status
+  POE
+  POE::Component::IRC
+  Perl::Tidy
+  Storable              (comes with perl 5.8.1)
+  Text::Template
+  Time::HiRes           (comes with perl 5.8.1)
+  URI
+
+----------
+Setting up
+----------
+
+Rename pastebot.conf-dist to pastebot.conf (unless you have one already).
+Customize your new/existing pastebot.conf.
+Run pastebot.perl.
+
+Pastebot is its own web server.  It often cannot bind to port 80
+because some other web server is already there.  That's why its
+default port (in pastebot.conf-dist) is 8888.  This is hostile towards
+people behind firewalls.
+
+Apache users can use ProxyPass to map a directory on their port-80
+servers to a running pastebot. This feature requires Apache be built
+with both mod_proxy and mod_proxy_add_forward.c support, and that the
+add forward module come before the proxy module:
+
+  ./configure --enable-module=proxy \
+    --activate-module=src/modules/extra/mod_proxy_add_forward.c \
+    --enable-module=proxy_add_forward \
+    --permute-module=proxy:END \
+    ...
+
+Create a virtual location for the proxy directory.
+
+  <Location /pastebot>
+    Order allow,deny
+    Allow from all
+    Deny from none
+  </Location>
+
+Tell Apache to forward any requests in the /pastebot/ directory
+through to the local pastebot process.
+
+  ProxyPass  /pastebot/  http://127.0.0.1:8000/
+
+Now people can use pastebot on port 80. Be sure to set the 'iname'
+configuration flag in the pastebot.conf web_server configuration section
+to hide the internal host/port values. Also be sure to set the proxy
+parameter:
+
+web_server
+  ...
+  proxy 127.0.0.1
+  iname http://example.org/pastebot/
+
+------
+Errors
+------
+
+* IRC client (foo): socket error occurred: Can't assign requested address
+
+  The most likely cause of this is an unknown host name, either for a
+  local machine or a remote IRC server.  If you have multiple servers
+  specified, the bot will try the next server in approximately one
+  minute.
+
+* Can't locate [some module] in @INC (@INC contains: ...)
+
+  Somehow you managed to install one of pastebot's required modules
+  without installing a module it in turn needs.  You'll need to install
+  [some module] manually.
+
+* <something> section <name> is redefined at ##
+
+  This error looks something like:
+
+    pastes section pbtest is redefined at 68
+    Compilation failed in require at Server/Web.pm line 18, <MPH> line 85.
+    BEGIN failed--compilation aborted at Server/Web.pm line 18, <MPH> line 85.
+    Compilation failed in require at ./pastebot.perl line 9, <MPH> line 85.
+    BEGIN failed--compilation aborted at ./pastebot.perl line 9, <MPH> line 85.
+
+  To fix, update the pastebot.conf to use different names for the
+  different sections:
+
+    web_server
+      name poenet
+      ...
+
+    irc
+      name efnet
+      ...
+
+    pastes
+      name neitherpoenetnorefnet
+      ...
+
+-------
+Support
+-------
+
+Various support options are available from pastebot's SourceForge
+summary page.  Please see: http://sf.net/projects/pastebot/
+
+---
+End
+---

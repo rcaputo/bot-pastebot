@@ -1,0 +1,20 @@
+# $Id: MANIFEST 89 2004-09-08 15:51:20Z rcaputo $
+CHANGES
+COPYRIGHT
+Client/IRC.pm
+MANIFEST
+MANIFEST.SKIP
+Makefile
+README
+Server/Web.pm
+TODO
+Util/Conf.pm
+Util/Data.pm
+Util/Web.pm
+data/nopaste.gif
+pastebot.conf-dist
+pastebot.perl
+templates/highlights.css
+templates/paste-answer.html
+templates/paste-form.html
+templates/paste-lookup.html
