@@ -2,7 +2,7 @@
 
 # Rocco's IRC bot stuff.
 
-package Client::IRC;
+package Bot::Pastebot::Client::IRC;
 
 use strict;
 
@@ -13,8 +13,12 @@ sub MSG_SPOKEN    () { 0x01 }
 sub MSG_WHISPERED () { 0x02 }
 sub MSG_EMOTED    () { 0x04 }
 
-use Bot::Pastebot::Conf;
-use Bot::Pastebot::Data;
+use Bot::Pastebot::Conf qw( get_names_by_type get_items_by_name );
+use Bot::Pastebot::Data qw(
+  clear_channels fetch_paste_channel delete_paste
+  clear_channel_ignores set_ignore clear_ignore get_ignores
+  add_channel remove_channel
+);
 use Bot::Pastebot::Server::Http;
 
 my %helptext =
@@ -80,8 +84,7 @@ foreach my $server (get_names_by_type('irc')) {
   my %conf = get_items_by_name($server);
 
   my $web_alias = $irc_to_web{$server};
-
-  POE::Component::IRC->new($server);
+  my $irc = POE::Component::IRC->spawn();
 
   POE::Session->create
     ( inline_states =>
@@ -89,7 +92,7 @@ foreach my $server (get_names_by_type('irc')) {
           my ($kernel, $heap, $session) = @_[KERNEL, HEAP, SESSION];
 
           $kernel->alias_set( "irc_client_$server" );
-          $kernel->post( $server => register => 'all' );
+          $irc->yield( register => 'all' );
 
           $heap->{server_index} = 0;
 
@@ -101,7 +104,7 @@ foreach my $server (get_names_by_type('irc')) {
 
         autoping => sub {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
-          $kernel->post($server => userhost => $heap->{my_nick})
+          $irc->yield( userhost => $heap->{my_nick})
             unless $heap->{seen_traffic};
           $heap->{seen_traffic} = 0;
           $kernel->delay( autoping => 300 );
@@ -121,16 +124,17 @@ foreach my $server (get_names_by_type('irc')) {
           $heap->{nick_index} = 0;
           $heap->{my_nick} = $conf{nick}->[$heap->{nick_index}];
 
-          $kernel->post( $server => connect =>
-                         { Debug     => 0,
-                           Nick      => $heap->{my_nick},
-                           Server    => $chosen_server,
-                           Port      => $chosen_port,
-                           Username  => $conf{uname},
-                           Ircname   => $conf{iname},
-                           LocalAddr => $conf{localaddr},
-                         }
-                       );
+          $irc->yield( connect => {
+              Debug     => 1,
+              Nick      => $heap->{my_nick},
+              Server    => $chosen_server,
+              Port      => $chosen_port,
+              Username  => $conf{uname},
+              Ircname   => $conf{iname},
+              LocalAddr => $conf{localaddr},
+              Bitmode   => "moo",
+            }
+          );
 
           $heap->{server_index}++;
           $heap->{server_index} = 0
@@ -139,7 +143,7 @@ foreach my $server (get_names_by_type('irc')) {
 
         join => sub {
           my ($kernel, $channel) = @_[KERNEL, ARG0];
-          $kernel->post( $server => join => $channel );
+          $irc->yield( join => $channel );
         },
 
         irc_msg => sub {
@@ -153,21 +157,23 @@ foreach my $server (get_names_by_type('irc')) {
           if ($msg =~ /^\s*help(?:\s+(\w+))?\s*$/) {
             my $what = $1 || 'help';
             if ($helptext{$what}) {
-              $kernel->post( $server => privmsg => $nick,
-                             $helptext{$what});
+              $irc->yield( privmsg => $nick, $helptext{$what} );
             }
           }
           elsif ($msg =~ /^\s*ignore\s/) {
             unless ($msg =~ /^\s*ignore\s+(\S+)(?:\s+(\S+))?\s*$/) {
-              $kernel->post( $server => privmsg => $nick,
-                "Usage: ignore <wildcard> [<channels>]");
+              $irc->yield(
+                privmsg => $nick, "Usage: ignore <wildcard> [<channels>]"
+              );
               return;
             }
             my ($mask, $channels) = ($1, $2);
-            unless ($mask =~ /^-?\d+(\.(\*|\d+)){3}$/
-                   || $mask eq '-') {
-              $kernel->post($server => privmsg => $nick,
-                "Invalid wildcard.  Try: help wildcards");
+            unless (
+              $mask =~ /^-?\d+(\.(\*|\d+)){3}$/ || $mask eq '-'
+            ) {
+              $irc->yield(
+                privmsg => $nick, "Invalid wildcard.  Try: help wildcards"
+              );
               return;
             }
             my @igchans;
@@ -178,55 +184,56 @@ foreach my $server (get_names_by_type('irc')) {
               @igchans = map lc, channels($conf{name});
             }
             # only the channels the user is an operator on
-            @igchans = grep {exists $heap->{users}{$_}{$nick}{mode} and
-                             $heap->{users}{$_}{$nick}{mode} =~ /@/} @igchans;
+            @igchans = grep {
+              exists $heap->{users}{$_}{$nick}{mode} and
+              $heap->{users}{$_}{$nick}{mode} =~ /@/
+            } @igchans;
             @igchans or return;
             if ($mask eq '-') {
               for my $chan (@igchans) {
                 clear_channel_ignores($conf{name}, $chan);
                 print "Nick '$nick' deleted all ignores on $chan\n";
               }
-              $kernel->post( $server => privmsg => $nick =>
-                "Removed all ignores on @igchans");
+              $irc->yield(
+                privmsg => $nick => "Removed all ignores on @igchans"
+              );
             }
             elsif ($mask =~ /^-(.*)$/) {
               my $clearmask = $1;
               for my $chan (@igchans) {
                 clear_ignore($conf{name}, $chan, $clearmask);
               }
-              $kernel->post( $server => privmsg => $nick =>
-                "Removed ignore $clearmask on @igchans");
+              $irc->yield(
+                privmsg => $nick => "Removed ignore $clearmask on @igchans"
+              );
             }
             else {
               for my $chan (@igchans) {
                 set_ignore($conf{name}, $chan, $mask);
               }
-              $kernel->post( $server => privmsg => $nick =>
-                "Added ignore mask $mask on @igchans");
+              $irc->yield(
+                privmsg => $nick => "Added ignore mask $mask on @igchans"
+              );
             }
           }
           elsif ($msg =~ /^\s*ignores\s/) {
             unless ($msg =~ /^\s*ignores\s+(\#\S+)\s*$/) {
-              $kernel->post( $server => privmsg => $nick,
-                "Usage: ignores <channel>");
+              $irc->yield( privmsg => $nick, "Usage: ignores <channel>" );
               return;
             }
             my $channel = lc $1;
             my @masks = get_ignores($conf{name}, $channel);
             unless (@masks) {
-              $kernel->post( $server => privmsg => $nick,
-                "No ignores on $channel" );
+              $irc->yield( privmsg => $nick, "No ignores on $channel" );
               return;
             }
             my $text = join " ", @masks;
             substr($text, 100) = '...' unless length $text < 100;
-            $kernel->post( $server=> privmsg => $nick,
-              "Ignores on $channel are: $text");
+            $irc->yield( privmsg => $nick, "Ignores on $channel are: $text" );
           }
           elsif ($msg =~ /^\s*delete\s/) {
             unless ($msg =~ /^\s*delete\s+(\d+)\s*$/) {
-              $kernel->post( $server => privmsg => $nick,
-                "Usage: delete <pasteid>");
+              $irc->yield( privmsg => $nick, "Usage: delete <pasteid>" );
               return;
             }
             my $pasteid = $1;
@@ -236,19 +243,18 @@ foreach my $server (get_names_by_type('irc')) {
               if ($heap->{users}{$paste_chan}{$nick}{mode} =~ /@/) {
                 delete_paste($conf{name}, $paste_chan, $pasteid, $nick)
                   or print "It didn't delete!\n";
-                $kernel->post( $server => privmsg => $nick =>
-                  "Deleted paste $pasteid")
+                $irc->yield( privmsg => $nick => "Deleted paste $pasteid" );
               }
               else {
-                $kernel->post( $server => privmsg => $nick =>
+                $irc->yield(
+                  privmsg => $nick =>
                   "Paste $pasteid was sent to $paste_chan - " .
                   "you aren't a channel operator on $paste_chan"
-                )
+                );
               }
             }
             else {
-              $kernel->post( $server => privmsg => $nick =>
-                "No such paste")
+              $irc->yield( privmsg => $nick => "No such paste" );
             }
           }
           elsif ($msg =~ /^\s*uptime\s*$/) {
@@ -256,14 +262,15 @@ foreach my $server (get_names_by_type('irc')) {
             my $wall_time = (time() - $^T) || 1;
             my $load_average =
               sprintf("%.4f", ($user_time+$system_time) / $wall_time);
-            $kernel->post
-              ( $server => privmsg => $nick,
-                "I was started on " . scalar(gmtime($^T)) . " GMT. " .
-                "I've been active for " . format_elapsed($wall_time, 2) . ". " .
-                sprintf( "I have used about %.2f%% of a CPU during my lifespan.",
-                         (($user_time+$system_time)/$wall_time) * 100
-                       )
-              );
+            $irc->yield(
+              privmsg => $nick,
+              "I was started on " . scalar(gmtime($^T)) . " GMT. " .
+              "I've been active for " . format_elapsed($wall_time, 2) . ". " .
+              sprintf(
+                "I have used about %.2f%% of a CPU during my lifespan.",
+                (($user_time+$system_time)/$wall_time) * 100
+              )
+            );
           }
         },
 
@@ -288,11 +295,11 @@ foreach my $server (get_names_by_type('irc')) {
           $heap->{my_nick} = $newnick;
 
           warn "Nickclash, now trying $newnick\n";
-          $kernel->post( $server => nick => $newnick );
+          $irc->yield( nick => $newnick );
         },
 
         ison => sub {
-          $_[KERNEL]->post( $server => ison => @{$conf{nick}} );
+          $irc->yield( ison => @{$conf{nick}} );
         },
 
         # ISON reply
@@ -302,7 +309,7 @@ foreach my $server (get_names_by_type('irc')) {
           my @nicklist = split " ", lc $nicklist;
           for my $totry (@{$conf{nick}}) {
             unless (grep $_ eq lc $totry, @nicklist) {
-              $kernel->post( $server => nick => $totry );
+              $irc->yield( nick => $totry );
               return;
             }
           }
@@ -311,7 +318,7 @@ foreach my $server (get_names_by_type('irc')) {
 
         _stop => sub {
           my $kernel = $_[KERNEL];
-          $kernel->post( $server => quit => $conf{quit} );
+          $irc->yield( quit => $conf{quit} );
         },
 
         _default => sub {
@@ -326,11 +333,9 @@ foreach my $server (get_names_by_type('irc')) {
           my ($kernel, $heap) = @_[KERNEL, HEAP];
 
           if (defined $conf{flags}) {
-            $kernel->post(
-              $server => mode => $heap->{my_nick} => $conf{flags}
-            );
+            $irc->yield( mode => $heap->{my_nick} => $conf{flags} );
           }
-          $kernel->post( $server => away => $conf{away} );
+          $irc->yield( away => $conf{away} );
 
           foreach my $channel (@{$conf{channel}}) {
             $kernel->yield( join => "\#$channel" );
@@ -342,32 +347,28 @@ foreach my $server (get_names_by_type('irc')) {
         announce => sub {
           my ($kernel, $heap, $channel, $message) =
             @_[KERNEL, HEAP, ARG0, ARG1];
-          $kernel->post( $server => privmsg => $channel => $message );
+          $irc->yield( privmsg => $channel => $message );
         },
 
         irc_ctcp_version => sub {
           my ($kernel, $sender) = @_[KERNEL, ARG0];
           my $who = (split /!/, $sender)[0];
           print "ctcp version from $who\n";
-          $kernel->post( $server => ctcpreply => $who, "VERSION $conf{cver}" );
+          $irc->yield( ctcpreply => $who, "VERSION $conf{cver}" );
         },
 
         irc_ctcp_clientinfo => sub {
           my ($kernel, $sender) = @_[KERNEL, ARG0];
           my $who = (split /!/, $sender)[0];
           print "ctcp clientinfo from $who\n";
-          $kernel->post( $server => ctcpreply =>
-                         $who, "CLIENTINFO $conf{ccinfo}"
-                       );
+          $irc->yield( ctcpreply => $who, "CLIENTINFO $conf{ccinfo}" );
         },
 
         irc_ctcp_userinfo => sub {
           my ($kernel, $sender) = @_[KERNEL, ARG0];
           my $who = (split /!/, $sender)[0];
           print "ctcp userinfo from $who\n";
-          $kernel->post( $server => ctcpreply =>
-                         $who, "USERINFO $conf{cuinfo}"
-                       );
+          $irc->yield( ctcpreply => $who, "USERINFO $conf{cuinfo}" );
         },
 
         irc_invite => sub {
@@ -387,7 +388,7 @@ foreach my $server (get_names_by_type('irc')) {
           my ($nick) = $who =~ /^([^!]+)/;
           if (lc ($nick) eq lc($heap->{my_nick})) {
             add_channel($conf{name}, $where);
-            $kernel->post( $server => who => $where );
+            $irc->yield( who => $where );
           }
           @{$heap->{users}{$where}{$nick}}{qw(ident host)} =
             (split /[!@]/, $who, 8)[1, 2];
