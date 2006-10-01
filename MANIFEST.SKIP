@@ -5,6 +5,4 @@
 \.tar\.gz$
 \bCVS\b
 ^\.#
-pastebot.conf$
-pastestore
 ~$
