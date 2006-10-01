@@ -6,15 +6,14 @@ package Util::Data;
 use warnings;
 use strict;
 
-use Exporter;
 use Carp qw(croak);
 use POE;
 use Storable;
-use Util::Conf;
+use Bot::Pastebot::Conf;
 
-use vars  qw(@ISA @EXPORT);
-@ISA    = qw(Exporter);
-@EXPORT = qw(
+use base qw(Exporter);
+
+our @EXPORT_OK = qw(
   store_paste fetch_paste delete_paste list_paste_ids
   delete_paste_by_id fetch_paste_channel clear_channel_ignores
   set_ignore clear_ignore get_ignores is_ignored channels add_channel

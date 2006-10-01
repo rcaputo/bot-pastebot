@@ -5,17 +5,11 @@
 package Util::Conf;
 
 use strict;
-use Exporter;
 use Carp qw(croak);
 use Getopt::Std;
-use Env;
 
-use vars qw(@ISA @EXPORT %OPTS);
-@ISA    = qw(Exporter);
-@EXPORT = qw(
-  get_names_by_type
-  get_items_by_name
-);
+use base qw(Exporter);
+our @EXPORT_OK = qw( get_names_by_type get_items_by_name );
 
 sub SCALAR   () { 0x01 }
 sub LIST     () { 0x02 }

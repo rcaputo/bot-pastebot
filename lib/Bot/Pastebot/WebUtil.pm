@@ -3,20 +3,20 @@
 # Rocco's POE web server helper functions.  Do URL en/decoding.  Load
 # static pages, and do template things with them.
 
-package Util::Web;
+package Bot::Pastebot::WebUtil;
 
+use warnings;
 use strict;
-use vars qw(@ISA @EXPORT);
 
 use CGI::Cookie;
 use Text::Template;
-use Exporter;
 
-@ISA    = qw(Exporter);
-@EXPORT = qw( url_decode url_encode parse_content parse_cookie static_response
-              dump_content dump_query_as_response base64_decode
-              html_encode is_true cookie
-            );
+use base qw(Exporter);
+our @EXPORT_OK = qw(
+	url_decode url_encode parse_content parse_cookie static_response
+	dump_content dump_query_as_response base64_decode html_encode
+	is_true cookie
+);
 
 #------------------------------------------------------------------------------
 # Build two URL-encoding maps.  Map non-printable characters to
