@@ -132,7 +132,6 @@ foreach my $server (get_names_by_type('irc')) {
               Username  => $conf{uname},
               Ircname   => $conf{iname},
               LocalAddr => $conf{localaddr},
-              Bitmode   => "moo",
             }
           );
 
