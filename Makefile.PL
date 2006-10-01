@@ -14,7 +14,7 @@ WriteMakefile(
   ABSTRACT     => 'The original clipboard-to-chat gateway.',
   VERSION_FROM => 'pastebot',
   PREREQ_PM    => {
-    'Flie::ShareDir'      => 0.05,
+    'File::ShareDir'      => 0.05,
     'HTTP::Request'       => 1.40,
     'HTTP::Response'      => 1.53,
     'POE'                 => 0.38,
