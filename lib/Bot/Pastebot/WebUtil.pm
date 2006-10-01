@@ -126,10 +126,10 @@ sub parse_content {
 sub parse_cookie {
   my ($cookie) = @_;
 
-  return {} if not defined $cookie;  
+  return {} if not defined $cookie;
   return { map url_decode($_), map /([^=]+)=?(.*)/s, split /; ?/, $cookie };
 }
-    
+
 # Generate a static response from a file.
 sub static_response {
   my ($filename, $record) = @_;

@@ -14,12 +14,13 @@ WriteMakefile(
   ABSTRACT     => 'The original clipboard-to-chat gateway.',
   VERSION_FROM => 'pastebot',
   PREREQ_PM    => {
-    'POE'                 => 0.38,
-    'Test::More'          => 0.63,
-    'Perl::Tidy'          => 1.46,
+    'Flie::ShareDir'      => 0.05,
     'HTTP::Request'       => 1.40,
     'HTTP::Response'      => 1.53,
+    'POE'                 => 0.38,
     'POE::Component::IRC' => 5.03,
+    'Perl::Tidy'          => 1.46,
+    'Test::More'          => 0.63,
   },
   EXE_FILES    => [ 'pastebot' ],
   dist         => {
@@ -29,4 +30,26 @@ WriteMakefile(
       'svn-log.perl | tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
     ),
   },
+  depend       => { pm_to_blib => 'setup_shared' },
 );
+
+sub MY::postamble {
+  my $postamble = (
+    "setup_shared:\n" .
+    "\t\$(NOECHO) \$(ABSPERLRUN) -MExtUtils::Install -e " .
+    "'pm_to_blib({\@ARGV}, '\\''\$(INST_LIB)/auto'\\'', " .
+    "'\\''\$(PM_FILTER)'\\'')' -- \\\n"
+  );
+
+  my @to_copy;
+  foreach (<static/*>) {
+    next unless -f $_;
+    next if /\~$/;
+    s!^static/!!;
+    push @to_copy, "static/$_ blib/arch/auto/Bot/Pastebot/$_";
+  }
+
+  $postamble .= "\t  " . join("\\\n\t  ", @to_copy) . "\n";
+
+  return $postamble;
+}

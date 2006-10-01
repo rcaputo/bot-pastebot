@@ -24,7 +24,7 @@ my %define = (
     irc     => SCALAR | REQUIRED,
     proxy   => SCALAR,
     iname   => SCALAR,
-    static  => SCALAR | REQUIRED,
+    static  => SCALAR,
   },
   irc => {
     name          => SCALAR | REQUIRED,

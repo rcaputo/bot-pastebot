@@ -1,16 +1,15 @@
-COPYRIGHT
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
 TODO
+examples/pastebot.conf
 lib/Bot/Pastebot/Client/Irc.pm
 lib/Bot/Pastebot/Conf.pm
 lib/Bot/Pastebot/Data.pm
 lib/Bot/Pastebot/Server/Http.pm
 lib/Bot/Pastebot/WebUtil.pm
 pastebot
-pastebot.conf-dist
 static/highlights.css
 static/nopaste.gif
 static/paste-answer.html

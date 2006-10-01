@@ -14,6 +14,7 @@ use HTTP::Response;
 use POE::Session;
 use POE::Component::Server::TCP;
 use POE::Filter::HTTPD;
+use File::ShareDir qw(dist_dir);
 
 use Bot::Pastebot::Conf qw( get_names_by_type get_items_by_name );
 use Bot::Pastebot::WebUtil qw(
@@ -521,6 +522,11 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
   my %conf = get_items_by_name($server);
   my %ircconf = get_items_by_name($conf{irc});
 
+	my $static = $conf{static};
+	unless (defined $static) {
+		$static = dist_dir("Bot-Pastebot");
+	}
+
   POE::Component::Server::TCP->new(
     Port     => $conf{port},
     (
@@ -550,7 +556,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
         args => [
           @_[ARG0..ARG2], $server,
           $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-          $conf{proxy}, $conf{iname}, $conf{static}
+          $conf{proxy}, $conf{iname}, $static
         ],
       );
     },

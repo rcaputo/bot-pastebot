@@ -163,10 +163,21 @@ Identifies the proxy so it may be ignored when headers are examined.
 
 =item static STATIC_PATH
 
-Required.  Defines the directory that contains static files that will
-be provided by the builtin web server.  Templates, graphics, and style
-sheets for the various served pages go here.  It is essentially the
-Pastebot server's document root.
+Optional.  Defines the directory that contains static files that will
+be provided by the pastebot's built-in web server.  Templates,
+graphics, and style sheets for the various served pages go here.  It
+is essentially the Pastebot server's document root.  Each web server
+is permitted to have its own static directory.
+
+The Pastebot comes with a set of default static files that will be
+used if "static" is not specified.  The files are installed in
+Bot::Pastebot's architecture-dependent auto directory, which may be
+found by running the following Perl command:
+
+  perl -MFile::ShareDir=dist_dir -wle 'print dist_dir("Bot-Pastebot")'
+
+If "static" is omitted, the default files will be loaded from that
+directory.
 
 =back
 
