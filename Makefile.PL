@@ -20,7 +20,6 @@ WriteMakefile(
     'HTTP::Request'       => 1.40,
     'HTTP::Response'      => 1.53,
     'POE::Component::IRC' => 5.03,
-    'Text::Template'      => 1.44,
   },
   EXE_FILES    => [ 'pastebot' ],
   dist         => {
