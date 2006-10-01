@@ -22,7 +22,7 @@ WriteMakefile(
     'POE::Component::IRC' => 5.03,
     'Text::Template'      => 1.44,
   },
-	EXE_FILES    => [ 'pastebot' ],
+  EXE_FILES    => [ 'pastebot' ],
   dist         => {
     COMPRESS   => 'gzip -9f',
     SUFFIX     => 'gz',
