@@ -2,7 +2,7 @@
 
 # Configuration reading and holding.
 
-package Util::Conf;
+package Bot::Pastebot::Conf;
 
 use strict;
 use Carp qw(croak);
@@ -24,6 +24,7 @@ my %define = (
     irc     => SCALAR | REQUIRED,
     proxy   => SCALAR,
     iname   => SCALAR,
+    static  => SCALAR | REQUIRED,
   },
   irc => {
     name          => SCALAR | REQUIRED,
@@ -85,16 +86,16 @@ getopts("f:", \%opts);
 my $cfile = $opts{"f"};
 my $f = "pastebot.conf";
 my @conf  = (
-  "./$f", "$HOME/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
+  "./$f", "$ENV{HOME}/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
 );
 
 unless ( $cfile ) {
-    for my $try ( @conf ) {
-	if ( -f $try ) {
-	    $cfile = $try;
-	    last;
-	}
+  for my $try ( @conf ) {
+    if ( -f $try ) {
+      $cfile = $try;
+      last;
     }
+  }
 }
 
 unless ( $cfile  and  -f $cfile ) {
