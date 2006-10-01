@@ -2,7 +2,7 @@
 
 # The PerlMud web server portion of our program.
 
-package Bot::Pastebot::Server::Web;
+package Bot::Pastebot::Server::Http;
 
 use warnings;
 use strict;
@@ -10,15 +10,17 @@ use strict;
 use Socket;
 use HTTP::Negotiate;
 use HTTP::Response;
-use Filter::Template;
 
 use POE::Session;
 use POE::Component::Server::TCP;
 use POE::Filter::HTTPD;
 
-use Bot::Pastebot::Conf;
-use Bot::Pastebot::WebUtil;
-use Bot::Pastebot::Data;
+use Bot::Pastebot::Conf qw( get_names_by_type get_items_by_name );
+use Bot::Pastebot::WebUtil qw(
+  static_response parse_content parse_cookie dump_content html_encode
+  is_true cookie
+);
+use Bot::Pastebot::Data qw( channels store_paste fetch_paste is_ignored );
 
 use Perl::Tidy;
 
@@ -36,14 +38,6 @@ sub PAGE_FOOTER () {
   )
 }
 
-template table_method (<header>) {
-  "<tr><td><header></td><td>" . $request-><header>() . "</td></tr>"
-}
-
-template table_header (<header>) {
-  "<tr><td><header></td><td>" . $request->header('<header>') . "</td></tr>"
-}
-
 #------------------------------------------------------------------------------
 # A web server.
 
@@ -56,19 +50,20 @@ sub httpd_session_started {
   my ( $heap,
        $socket, $remote_address, $remote_port,
        $my_name, $my_host, $my_port, $my_ifname, $my_isrv,
-       $proxy, $my_iname,
+       $proxy, $my_iname, $my_static,
      ) = @_[HEAP, ARG0..$#_];
 
   # TODO: I think $my_host is obsolete.  Maybe it can be removed, and
   # $my_ifname can be used exclusively?
 
-  $heap->{my_host}  = $my_host;
-  $heap->{my_port}  = $my_port;
-  $heap->{my_name}  = $my_name;
-  $heap->{my_inam}  = $my_ifname;
-  $heap->{my_iname} = $my_iname;
-  $heap->{my_isrv}  = $my_isrv;
-  $heap->{my_proxy} = $proxy;
+  $heap->{my_host}    = $my_host;
+  $heap->{my_port}    = $my_port;
+  $heap->{my_name}    = $my_name;
+  $heap->{my_inam}    = $my_ifname;
+  $heap->{my_iname}   = $my_iname;
+  $heap->{my_isrv}    = $my_isrv;
+  $heap->{my_proxy}   = $proxy;
+  $heap->{my_static}  = $my_static;
 
   $heap->{remote_addr} = inet_ntoa($remote_address);
   $heap->{remote_port} = $remote_port;
@@ -133,18 +128,19 @@ sub httpd_session_got_query {
   ### Fetch the highlighted style sheet.
 
   if ($url eq '/style') {
-    my $response = static_response( "templates/highlights.css", { } );
+    my $response = static_response( "$heap->{my_static}/highlights.css", { } );
     $heap->{wheel}->put( $response );
     return;
   }
 
   ### Fetch some kind of data.
 
-  if ($url =~ m{^/(data/.+?)\s*$}) {
+  if ($url =~ m{^/static/(.+?)\s*$}) {
     # TODO - Better path support?
     my $filename = $1;
     $filename =~ s{/\.+}{/}g;  # Remove ., .., ..., etc.
     $filename =~ s{/+}{/}g;    # Combine // into /
+    $filename = "$heap->{my_static}/$filename";
 
     my ($code, $type, $content);
 
@@ -301,7 +297,7 @@ sub httpd_session_got_query {
       $paste = fix_paste($paste, 0, 0, 0, 0);
 
       my $response = static_response(
-        "templates/paste-answer.html",
+        "$heap->{my_static}/paste-answer.html",
         { paste_id   => $id,
           error      => $error,
           paste_link => $paste_link,
@@ -375,7 +371,7 @@ sub httpd_session_got_query {
       }
       else {
         $response = static_response(
-          "templates/paste-lookup.html",
+          "$heap->{my_static}/paste-lookup.html",
           { bot_name => $heap->{my_name},
             paste_id => $num,
             nick     => $nick,
@@ -444,7 +440,7 @@ sub httpd_session_got_query {
     # Build content.
 
     my $response = static_response(
-      "templates/paste-form.html",
+      "$heap->{my_static}/paste-form.html",
       { bot_name => $heap->{my_name},
         channels => "@channels",
         footer   => PAGE_FOOTER,
@@ -473,50 +469,34 @@ sub httpd_session_got_query {
     "</p>" .
     "<table border=1>" .
 
-    {% table_method authorization             %} .
-    {% table_method authorization_basic       %} .
-    {% table_method content_encoding          %} .
-    {% table_method content_language          %} .
-    {% table_method content_length            %} .
-    {% table_method content_type              %} .
-    {% table_method content                   %} .
-    {% table_method date                      %} .
-    {% table_method expires                   %} .
-    {% table_method from                      %} .
-    {% table_method if_modified_since         %} .
-    {% table_method if_unmodified_since       %} .
-    {% table_method last_modified             %} .
-    {% table_method method                    %} .
-    {% table_method protocol                  %} .
-    {% table_method proxy_authorization       %} .
-    {% table_method proxy_authorization_basic %} .
-    {% table_method referer                   %} .
-    {% table_method server                    %} .
-    {% table_method title                     %} .
-    {% table_method url                       %} .
-    {% table_method user_agent                %} .
-    {% table_method www_authenticate          %} .
+    join(
+      "",
+      map {
+        "<tr><td><header></td><td>" . $request->$_() . "</td></tr>"
+      } qw(
+        authorization authorization_basic content_encoding
+        content_language content_length content_type content date
+        expires from if_modified_since if_unmodified_since
+        last_modified method protocol proxy_authorization
+        proxy_authorization_basic referer server title url user_agent
+        www_authenticate
+      )
+    ) .
 
-    {% table_header Accept     %} .
-    {% table_header Connection %} .
-    {% table_header Host       %} .
-
-    {% table_header username  %} .
-    {% table_header opaque    %} .
-    {% table_header stale     %} .
-    {% table_header algorithm %} .
-    {% table_header realm     %} .
-    {% table_header uri       %} .
-    {% table_header qop       %} .
-    {% table_header auth      %} .
-    {% table_header nonce     %} .
-    {% table_header cnonce    %} .
-    {% table_header nc        %} .
-    {% table_header response  %} .
+    join(
+      "",
+      map {
+        "<tr><td><header></td><td>" . $request->header($_) . "</td></tr>"
+      } qw(
+        Accept Connection Host
+        username opaque stale algorithm realm uri qop auth nonce
+        cnonce nc response
+      )
+    ) .
 
     "</table>" .
 
-    &dump_content($request->content()) .
+    dump_content($request->content()) .
 
     "<p>Request as string=" . $request->as_string() . "</p>" .
 
@@ -544,11 +524,11 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
   POE::Component::Server::TCP->new(
     Port     => $conf{port},
     (
-			(defined $conf{iface})
+      (defined $conf{iface})
       ? ( Address => $conf{iface} )
       : ()
     ),
-		# TODO - Can we use the discrete callbacks?
+    # TODO - Can we use the discrete callbacks?
     Acceptor => sub {
       POE::Session->create(
         inline_states => {
@@ -570,7 +550,7 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
         args => [
           @_[ARG0..ARG2], $server,
           $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-          $conf{proxy}, $conf{iname},
+          $conf{proxy}, $conf{iname}, $conf{static}
         ],
       );
     },
