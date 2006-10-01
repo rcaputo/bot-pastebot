@@ -4,14 +4,20 @@ $Id$
 About
 -----
 
-Pastebot is a web-based dropbox for small texts.  On the one hand, it
-is a web server, accepting "pastes" from one person to share with
-others.  On the other hand, it is an IRC bot that announces paste URLs
-on appropriate channels.
+Pastebot is a web-based dropbox for small texts.  It's a gateway from
+your clipboard to your favorite IRC channel, and hopefully someday
+your favorite chat room.
+
+On the one hand, it is a web server that accepts "pastes" from one
+person to share with others.  On the other hand, it is an IRC bot that
+announces paste URLs on appropriate channels.
 
 -------------
 Quick install
 -------------
+
+TODO - The installation instructions are outdated.  It should install
+mostly via the usual CPAN means.
 
 If you're the system administrator for your machine, you can install
 all the necessary modules with
@@ -29,25 +35,32 @@ The default installation structure:
 Requirements
 ------------
 
-Perl 5.005, but Perl 5.6.1 or newer is recommended.
+A contemporary version of Perl.
 
-You'll need the following Perl modules.
+These requirements come with contemporary versions of Perl:
 
   Filter::Util::Call    (comes with perl 5.8.1)
+  Storable              (comes with perl 5.8.1)
+  Time::HiRes           (comes with perl 5.8.1)
+
+These additional modules will need to be installed.  If you're
+installing this through the CPAN shell, it will gladly pick up the
+dependencies for you.
+
   HTTP::Request
   HTTP::Response
   HTTP::Status
   POE
   POE::Component::IRC
   Perl::Tidy
-  Storable              (comes with perl 5.8.1)
   Text::Template
-  Time::HiRes           (comes with perl 5.8.1)
   URI
 
 ----------
 Setting up
 ----------
+
+TODO - This section is outdated.
 
 Rename pastebot.conf-dist to pastebot.conf (unless you have one already).
 Customize your new/existing pastebot.conf.
@@ -138,8 +151,7 @@ Errors
 Support
 -------
 
-Various support options are available from pastebot's SourceForge
-summary page.  Please see: http://sf.net/projects/pastebot/
+http://thirdlobe.com/projects/pastebot
 
 ---
 End
