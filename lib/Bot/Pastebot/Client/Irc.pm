@@ -13,9 +13,9 @@ sub MSG_SPOKEN    () { 0x01 }
 sub MSG_WHISPERED () { 0x02 }
 sub MSG_EMOTED    () { 0x04 }
 
-use Util::Conf;
-use Util::Data;
-use Server::Web;
+use Bot::Pastebot::Conf;
+use Bot::Pastebot::Data;
+use Bot::Pastebot::Server::Http;
 
 my %helptext =
   (

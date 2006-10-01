@@ -2,9 +2,10 @@
 
 # The PerlMud web server portion of our program.
 
-use strict;
+package Bot::Pastebot::Server::Web;
 
-package Server::Web;
+use warnings;
+use strict;
 
 use Socket;
 use HTTP::Negotiate;
@@ -15,9 +16,9 @@ use POE::Session;
 use POE::Component::Server::TCP;
 use POE::Filter::HTTPD;
 
-use Util::Conf;
-use Util::Web;
-use Util::Data;
+use Bot::Pastebot::Conf;
+use Bot::Pastebot::WebUtil;
+use Bot::Pastebot::Data;
 
 use Perl::Tidy;
 
@@ -27,7 +28,8 @@ sub DUMP_REQUEST () { 0 }
 sub WEB_SERVER_TYPE () { "web_server" }
 
 sub PAGE_FOOTER () {
-  ( "<div align=right><font size='-1'>" .
+  (
+    "<div align=right><font size='-1'>" .
     "<a href='http://sf.net/projects/pastebot/'>Pastebot</a>" .
     " is powered by " .
     "<a href='http://poe.perl.org/'>POE</a>.</font></div>"
@@ -541,35 +543,36 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
 
   POE::Component::Server::TCP->new(
     Port     => $conf{port},
-    ( (defined $conf{iface})
+    (
+			(defined $conf{iface})
       ? ( Address => $conf{iface} )
       : ()
     ),
-    Acceptor =>
-    sub {
+		# TODO - Can we use the discrete callbacks?
+    Acceptor => sub {
       POE::Session->create(
-				inline_states => {
-					_start    => \&httpd_session_started,
+        inline_states => {
+          _start    => \&httpd_session_started,
           got_flush => \&httpd_session_flushed,
           got_query => \&httpd_session_got_query,
           got_error => \&httpd_session_got_error,
-				},
+        },
 
-				# Note the use of ifname here in ARG6.  This gives the
-				# responding session knowledge of its host name for
-				# building HTML responses.  Most of the time it will be
-				# identical to iface, but sometimes there may be a reverse
-				# proxy, firewall, or NATD between the address we bind to
-				# and the one people connect to.  In that case, ifname is
-				# the address the outside world sees, and iface is the one
-				# we've bound to.
+        # Note the use of ifname here in ARG6.  This gives the
+        # responding session knowledge of its host name for
+        # building HTML responses.  Most of the time it will be
+        # identical to iface, but sometimes there may be a reverse
+        # proxy, firewall, or NATD between the address we bind to
+        # and the one people connect to.  In that case, ifname is
+        # the address the outside world sees, and iface is the one
+        # we've bound to.
 
-				args => [
-					@_[ARG0..ARG2], $server,
-					$conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-					$conf{proxy}, $conf{iname},
-				],
-			);
+        args => [
+          @_[ARG0..ARG2], $server,
+          $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
+          $conf{proxy}, $conf{iname},
+        ],
+      );
     },
   );
 }
