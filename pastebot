@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+# $Id$
+
+use warnings;
+use strict;
+
+use lib qw(. ./lib);
+
+our $VERSION = 0.50;
+
+use File::Basename;
+use Perl::Tidy;
+
+use POE;
+use Bot::Pastebot::Client::Irc;
+use Bot::Pastebot::Server::Http;
+
+LoadLibraries();
+POE::Kernel->run();
+
+exit 0;
+
+sub HELP_MESSAGE {
+  my $output = shift;
+
+  print $output "usage:\n";
+  print $output "  $0             (use pastebot.conf for configuration)\n";
+  print $output "  $0 -f filename (read a particular configuration file)\n";
+  exit;
+}
+
+sub VERSION_MESSAGE {
+  my $output = shift;
+  print $output "$0 version $VERSION\n";
+}
