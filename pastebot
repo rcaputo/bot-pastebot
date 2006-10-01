@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # $Id$
-
+G
 use warnings;
 use strict;
 
@@ -33,3 +33,325 @@ sub VERSION_MESSAGE {
   my $output = shift;
   print $output "$0 version $VERSION\n";
 }
+
+__END__
+
+=head1 NAME
+
+pastebot - the original clipboard to chat gateway
+
+=head1 SYNOPSIS
+
+pastebot -f configfile
+
+=head1 DESCRIPTION
+
+Pastebot is an IRC bot and a web server in one program.  Users submit
+short pieces of text to the web server, and the IRC bot announces them
+in IRC.
+
+A single pastebot instance can provide one or more web servers, each
+accepting connections on a different virtual host and/or port.
+
+Likewise, a single pastebot may connect to zero or more IRC networks
+and announce pastes on zero or more channels on each.  The pastebot
+merely acts as a web service in zero-bot mode.
+
+=head1 CONFIGURATION SYNTAX
+
+Nearly all of pastebot's options are set in a configuration file.  The
+general syntax for this file follows these rules:
+
+Sections are defined by text that begins in the first column.  Section
+parameters are indented and consist of a parameter name and its value
+separated by whitespace.  This example defines a web_server section
+named "poenet" that listens on port 8888.
+
+  web_server
+    name  poenet
+    port  8888
+
+Each section defines a component type within the pastebot.  Each
+section requires a unique name since there may be more than one
+instance of a component.  The names permit the program to reference
+specific components without confusion.
+
+Some parameters may contain multiple values, though.  Each value is
+defined on a separate configuration line using the same parameter
+name.  For example, it's useful to configure multiple IRC servers for
+a bot to choose from.  If one server is unavailable, it can try
+another.  Here's how that's done:
+
+  irc
+    name efnet
+    server irc.carrier1.net.uk  6667
+    server irc.daxnet.no        6667
+
+Configuration files may contain comments, which are text after a hash
+mark ("#").  Comments and blank lines are ignored.
+
+  # Configure the paste database.
+	pastes
+    expire 86400
+
+That's all.
+
+=head1 CONFIGURING PASTEBOT
+
+Pastebot configuration is broken down into three section types:
+"web_server", "irc", and "pastes".  They define the web server, irc
+network, and paste database that the bot will use.
+
+=head2 Configuring a Web Server
+
+The web_server section defines a pastebot's web server.  A pastebot
+may have more than one web server.  Each web server is defined in a
+separate web_server section, and each must have a different name.
+
+A sample:
+
+	web_server
+		iface   10.0.0.80
+		ifname  poe.perl.org
+		iname   http://poe.perl.org:8888/
+		irc     freenode_irc
+		name    freenode_web
+		port    8888
+		proxy   127.0.0.1
+
+=over 2
+
+=item iface HOST_OR_ADDRESS
+
+Defines the interface host or numeric address that this web server
+will bind to while listening for new connections.  It's common for the
+interface address to be different than the one the outside world sees.
+Required.
+
+=item ifname HOST_OR_ADDRESS
+
+Defines the web server's public address, which is displayed to users
+in various messages and may be different than the internal address the
+web service has bound to.  Optional.  If omitted, the value of "iface"
+will be used instead.
+
+=item iname BASE_URL
+
+The "home page" for the pastebot's web server.  It's advertised in
+multiple places, such as the bot's WHOIS information.  The BASE_URL
+should agree with "ifname" and "port".  Optional.
+
+=item irc IRC_NAME
+
+Identifies the IRC bot that will announce paste URLs.  The IRC_NAME is
+the name of the bot as specified by the "name" parameter of the "irc"
+section.  Required.
+
+=item name NAME
+
+Defines the web server's name.  Each web server must have its own name
+so they can be referenced individually.  The web server's name is also
+used in web page titles and IRC announcements.  Required.
+
+=item port PORT_NUMBER
+
+This is the port the web server listens on.  Required.
+
+=item proxy ADDRESS
+
+Optional.  Used when the pastebot's web server is behind a proxy.
+Identifies the proxy so it may be ignored when headers are examined.
+
+=back
+
+=head2 Configuring an IRC Bot
+
+The irc section defines a pastebot's IRC bot.  A pastebot may have
+zero, one, or more IRC bots.  Each bot is defined in a separate irc
+section, and each must have a different name.  A pastebot with no IRC
+bots is a web-only service.
+
+A sample:
+
+	irc
+		away          saving humanity from evil paste
+		ccinfo        ACTION VERSION CLIENTINFO USERINFO
+		channel       pastebot
+		channel       perl
+		channel       poe
+		cuinfo        owned and operated by rcaputo <rcaputo@cpan.org>
+		cver          pastebot 1.0 <http://thirdlobe.com/projects/pastebot/>
+		flags         +i
+		iname         http://poe.perl.org:8888/
+		join_cfg_only 1
+		localaddr     poe.perl.org
+		name          freenode_irc
+		nick          eatpaste
+		nick          pastebot
+		quit          how will you live without me?
+		server        irc.freenode.net 6667
+		server        irc.freenode.net 7000
+		uname         pastebot
+
+=over 2
+
+=item away AWAY_MESSAGE
+
+Pastebots set themselves "away" immediately when they connect to IRC.
+They run unattended, so there is nobody to answer any messages.  This
+parameter sets the message that will be displayed to anyone examining
+the bot's WHOIS information.
+
+=item ccinfo CTCP_CLIENT_INFO
+
+Sets the bot's CTCP CLIENTINFO response.  Optional, but some networks
+require that clients respond to client information requests.
+
+=item channel CHANNEL
+
+Required.  Defines the channel or channels that the pastebot will
+automatically join when it connects to this IRC network.  A pastebot
+may join multiple channels, each defined as a separate "channel"
+entry.
+
+=item cuinfo CTCP_USER_INFO
+
+Sets the bot's CTCP USERINFO response.  Optional, but some networks
+require that clients respond to user information requests.
+
+=item cver CTCP_VERSION_INFO
+
+Sets the bot's CTCP VERSION response.  Optional, but some networks
+require that clients respond to version requests.
+
+=item flags USER_FLAGS
+
+Optional.  When specified, sets the user flags that the pastebot will
+set once it has connected to the IRC network.  Commonly set to "+i" so
+the bot will be "invisible" outside the channels it's currently on.
+This helps reduce the amount of harassment the bot receives.
+
+=item iname IRC_NAME
+
+The pastebot's "IRC name", which is what appears in WHOIS information.
+By convention, pastebots include their home page URLs here.  Be sure
+the URL's host and port match "ifname" and "port" in the appropriate
+web_server section.  Required.
+
+=item join_cfg_only BOOLEAN
+
+Optional.  Defaults to 0 (false).  Normally a pastebot will join any
+channel it's invited into.  When join_cfg_only is true, however, the
+pastebot will only join channels that have been specified in its
+configuration file.
+
+=item localaddr ADDRESS
+
+Optional.  The localaddr specifies an ADDRESS that the bot will bind
+to before making connections.  This allows the bot to appear online as
+coming from a particular virtual host ADDRESS, if its host machine has
+more than one.
+
+=item name NAME
+
+Required.  This is the IRC bot's internal name.  To be useful, it
+should match the "irc" parameter in one of the web_server sections.
+
+=item nick NICKNAME
+
+Required.  Specifies the bot's nickname on the IRC network.  A bot may
+have multiple nicknames, each specified as a separate configuration
+line.  It will attempt to use them in order, skipping to the next in
+the list as it determines each is already taken.  If every nickname is
+taken, it will append numeric digets to the names and try again.
+
+The pastebot will periodically try to reclaim one of the original
+nicknames in its configuration.
+
+=item quit QUIT_MESSAGE
+
+This sets the pastebot's quit message should it need to log off for
+any reason.
+
+=item server SERVER PORT
+
+Sets the IRC server and port to connect to.  Required.  The pastebot
+can connect to one of several servers, each specified on a different
+"server" line.  If one is unavailable, it will rotate to the next.
+
+=item uname USER_NAME
+
+IRC requires clients to send a short "user name" when establishing a
+connection.  This parameter specifies that name.
+
+=back
+
+=head2 Configuring Pastebot's Database
+
+Pastebot must store uploaded text somewhere.
+
+	pastes
+		check   3600
+		count   0
+		expire  864000
+		name    pasty
+		store   /home/troc/.pastebot
+
+=over 2
+
+=item check SECONDS
+
+How often to check for expired pastes.  The value is the number of
+SECONDS between each check.  3600 is an hour, 86400 is a day.
+
+Performing expiration checks too frequently will slow down the bot.
+Currently these checks are done within the main process, which is
+cooperatively multitasked.  The entire bot pauses while the check
+occurs.
+
+TODO - Revise the expiration check to work cooperatively, or fork it
+into a separate process altogether.
+
+=item count MAX_PASTES
+
+Set a limit on the number of pastes a pastebot's database may hold,
+regardless whether they're too young to expire.  This limit will be
+disabled if MAX_PASTES is zero.
+
+If set, only the MAX_PASTES newest pastes will remain after a periodic
+expiration check.
+
+=item expire MAX_AGE_SECONDS
+
+Sets the maximum limit for the age of pastes to retain.  This limit
+may be disabled if MAX_AGE_SECONDS is zero.  If set, however, pastes
+that are older than MAX_AGE_SECONDS will be purged during a periodic
+expiration check.
+
+=item store DIRECTORY
+
+Sets the absolute path of the base directory in which pastes will be
+stored.  This directory will be created if it doesn't exist.  Parent
+directories will not be created, however.
+
+=back
+
+=head1 BUGS
+
+Pastebot probably has bugs.
+
+Pastebot is a rather old project.  It was started in 2002, and it
+hasn't had as much love as it deserves.  Please let us know about any
+problems you find, either by e-mail or through the project's web site:
+L<http://thirdlobe.com/projects/pastebot>.  We're also interested in
+hearing how you use the Pastebot.
+
+=head1 AUTHORS & COPYRIGHT
+
+Pastebot is Copyright (C) 2002-2006 by Rocco Caputo.  All rights are
+reserved.  Pastebot is free software; you may redistribute and/or
+modify it under the same terms as Perl itself.
+
+Rocco may be reached via <rcaputo+pastebot@cpan.org>.
+
+=cut
