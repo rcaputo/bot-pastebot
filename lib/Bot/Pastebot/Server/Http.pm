@@ -520,49 +520,51 @@ sub httpd_session_got_query {
 
 # Start the HTTPD server.
 
-foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
-  my %conf = get_items_by_name($server);
-  my %ircconf = get_items_by_name($conf{irc});
+sub initialize {
+  foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
+    my %conf = get_items_by_name($server);
+    my %ircconf = get_items_by_name($conf{irc});
 
-  my $static = $conf{static};
-  unless (defined $static) {
-    $static = dist_dir("Bot-Pastebot");
+    my $static = $conf{static};
+    unless (defined $static) {
+      $static = dist_dir("Bot-Pastebot");
+    }
+
+    POE::Component::Server::TCP->new(
+      Port     => $conf{port},
+      (
+        (defined $conf{iface})
+        ? ( Address => $conf{iface} )
+        : ()
+      ),
+      # TODO - Can we use the discrete callbacks?
+      Acceptor => sub {
+        POE::Session->create(
+          inline_states => {
+            _start    => \&httpd_session_started,
+            got_flush => \&httpd_session_flushed,
+            got_query => \&httpd_session_got_query,
+            got_error => \&httpd_session_got_error,
+          },
+
+          # Note the use of ifname here in ARG6.  This gives the
+          # responding session knowledge of its host name for
+          # building HTML responses.  Most of the time it will be
+          # identical to iface, but sometimes there may be a reverse
+          # proxy, firewall, or NATD between the address we bind to
+          # and the one people connect to.  In that case, ifname is
+          # the address the outside world sees, and iface is the one
+          # we've bound to.
+
+          args => [
+            @_[ARG0..ARG2], $server,
+            $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
+            $conf{proxy}, $conf{iname}, $static
+          ],
+        );
+      },
+    );
   }
-
-  POE::Component::Server::TCP->new(
-    Port     => $conf{port},
-    (
-      (defined $conf{iface})
-      ? ( Address => $conf{iface} )
-      : ()
-    ),
-    # TODO - Can we use the discrete callbacks?
-    Acceptor => sub {
-      POE::Session->create(
-        inline_states => {
-          _start    => \&httpd_session_started,
-          got_flush => \&httpd_session_flushed,
-          got_query => \&httpd_session_got_query,
-          got_error => \&httpd_session_got_error,
-        },
-
-        # Note the use of ifname here in ARG6.  This gives the
-        # responding session knowledge of its host name for
-        # building HTML responses.  Most of the time it will be
-        # identical to iface, but sometimes there may be a reverse
-        # proxy, firewall, or NATD between the address we bind to
-        # and the one people connect to.  In that case, ifname is
-        # the address the outside world sees, and iface is the one
-        # we've bound to.
-
-        args => [
-          @_[ARG0..ARG2], $server,
-          $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-          $conf{proxy}, $conf{iname}, $static
-        ],
-      );
-    },
-  );
 }
 
 ### Fix paste for presentability.

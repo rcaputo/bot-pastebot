@@ -263,42 +263,44 @@ sub remove_channel {
 
 # Init stuff
 
-my $dir = pastestore();
+sub initialize {
+  my $dir = pastestore();
 
-unless (-d $dir) {
-  use File::Path;
-  eval { mkpath $dir };
-  if ($@) {
-    die "Couldn't create directory $dir: $@";
+  unless (-d $dir) {
+    use File::Path;
+    eval { mkpath $dir };
+    if ($@) {
+      die "Couldn't create directory $dir: $@";
+    }
   }
-}
 
-if (-e "$dir/Index") {
-  %paste_cache = %{retrieve "$dir/Index"};
-  $id_sequence = (sort keys %paste_cache)[-1];
-}
-if (-e "ignorelist") {
-  %ignores = %{retrieve 'ignorelist'};
-}
+  if (-e "$dir/Index") {
+    %paste_cache = %{retrieve "$dir/Index"};
+    $id_sequence = (sort keys %paste_cache)[-1];
+  }
+  if (-e "ignorelist") {
+    %ignores = %{retrieve 'ignorelist'};
+  }
 
-my @pastes = get_names_by_type('pastes');
-if (@pastes) {
-  my %conf = get_items_by_name($pastes[0]);
-  if ($conf{'check'} && $conf{'expire'}) {
-    POE::Session->create(
-      inline_states => {
-        _start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} ); },
-        ticks => sub {
-          for (keys %paste_cache) {
-            next unless (
-              (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'}
-            );
-            delete_paste_by_id($_);
-          }
-          $_[KERNEL]->delay( ticks => $conf{'check'} );
+  my @pastes = get_names_by_type('pastes');
+  if (@pastes) {
+    my %conf = get_items_by_name($pastes[0]);
+    if ($conf{'check'} && $conf{'expire'}) {
+      POE::Session->create(
+        inline_states => {
+          _start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} ); },
+          ticks => sub {
+            for (keys %paste_cache) {
+              next unless (
+                (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'}
+              );
+              delete_paste_by_id($_);
+            }
+            $_[KERNEL]->delay( ticks => $conf{'check'} );
+          },
         },
-      },
-    );
+      );
+    }
   }
 }
 

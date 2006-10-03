@@ -12,8 +12,15 @@ use File::Basename;
 use Perl::Tidy;
 
 use POE;
+use Bot::Pastebot::Conf;
+use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
 use Bot::Pastebot::Server::Http;
+
+Bot::Pastebot::Conf->load();
+Bot::Pastebot::Data->initialize();
+Bot::Pastebot::Client::Irc->initialize();
+Bot::Pastebot::Server::Http->initialize();
 
 POE::Kernel->run();
 exit 0;

@@ -9,7 +9,7 @@ use Carp qw(croak);
 use Getopt::Std;
 
 use base qw(Exporter);
-our @EXPORT_OK = qw( get_names_by_type get_items_by_name );
+our @EXPORT_OK = qw( get_names_by_type get_items_by_name load );
 
 sub SCALAR   () { 0x01 }
 sub LIST     () { 0x02 }
@@ -89,86 +89,88 @@ my @conf  = (
   "./$f", "$ENV{HOME}/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
 );
 
-unless ( $cfile ) {
-  for my $try ( @conf ) {
-    if ( -f $try ) {
-      $cfile = $try;
-      last;
+sub load {
+  unless ( $cfile ) {
+    for my $try ( @conf ) {
+      if ( -f $try ) {
+        $cfile = $try;
+        last;
+      }
     }
   }
-}
 
-unless ( $cfile  and  -f $cfile ) {
-  die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
-}
+  unless ( $cfile  and  -f $cfile ) {
+    die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
+  }
 
-open(MPH, "<$cfile") or
-  die "\nconf error: Cannot open configuration file [$cfile]: $!";
+  open(MPH, "<$cfile") or
+    die "\nconf error: Cannot open configuration file [$cfile]: $!";
 
-while (<MPH>) {
-  chomp;
-  s/\s*\#.*$//;
-  next if /^\s*$/;
+  while (<MPH>) {
+    chomp;
+    s/\s*\#.*$//;
+    next if /^\s*$/;
 
-  # Section item.
-  if (/^\s+(\S+)\s+(.*?)\s*$/) {
+    # Section item.
+    if (/^\s+(\S+)\s+(.*?)\s*$/) {
 
-    die(
-      "conf error: ",
-      "can't use an indented item ($1) outside of an unindented section ",
-      "at $cfile line $.\n"
-    ) unless defined $section;
+      die(
+        "conf error: ",
+        "can't use an indented item ($1) outside of an unindented section ",
+        "at $cfile line $.\n"
+      ) unless defined $section;
 
-    die(
-      "conf error: item `$1' does not belong in section `$section' ",
-      "at $cfile line $.\n"
-    ) unless exists $define{$section}->{$1};
+      die(
+        "conf error: item `$1' does not belong in section `$section' ",
+        "at $cfile line $.\n"
+      ) unless exists $define{$section}->{$1};
 
-    if (exists $item{$1}) {
-      if (ref($item{$1}) eq 'ARRAY') {
-        push @{$item{$1}}, $2;
+      if (exists $item{$1}) {
+        if (ref($item{$1}) eq 'ARRAY') {
+          push @{$item{$1}}, $2;
+        }
+        else {
+          die "conf error: option $1 redefined at $cfile line $.\n";
+        }
       }
       else {
-        die "conf error: option $1 redefined at $cfile line $.\n";
+        if ($define{$section}->{$1} & LIST) {
+          $item{$1} = [ $2 ];
+        }
+        else {
+          $item{$1} = $2;
+        }
       }
+      next;
     }
-    else {
-      if ($define{$section}->{$1} & LIST) {
-        $item{$1} = [ $2 ];
+
+    # Section leader.
+    if (/^(\S+)\s*$/) {
+
+      # A new section ends the previous one.
+      flush_section($cfile);
+
+      $section      = $1;
+      $section_line = $.;
+      undef %item;
+
+      # Pre-initialize any lists in the section.
+      while (my ($item_name, $item_flags) = each %{$define{$section}}) {
+        if ($item_flags & LIST) {
+          $item{$item_name} = [];
+        }
       }
-      else {
-        $item{$1} = $2;
-      }
+
+      next;
     }
-    next;
+
+    die "conf error: syntax error in $cfile at line $.\n";
   }
 
-  # Section leader.
-  if (/^(\S+)\s*$/) {
+  flush_section($cfile);
 
-    # A new section ends the previous one.
-    flush_section($cfile);
-
-    $section      = $1;
-    $section_line = $.;
-    undef %item;
-
-    # Pre-initialize any lists in the section.
-    while (my ($item_name, $item_flags) = each %{$define{$section}}) {
-      if ($item_flags & LIST) {
-        $item{$item_name} = [];
-      }
-    }
-
-    next;
-  }
-
-  die "conf error: syntax error in $cfile at line $.\n";
+  close MPH;
 }
-
-flush_section($cfile);
-
-close MPH;
 
 sub get_names_by_type {
   my $type = shift;
