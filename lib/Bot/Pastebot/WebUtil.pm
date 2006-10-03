@@ -143,10 +143,10 @@ sub static_response {
   }
   else {
     $code = 500;
-    $content =
-      ( "<html><head><title>Template Error</title></head>" .
-        "<body>Error opening $filename: $!</body></html>"
-      );
+    $content = (
+      "<html><head><title>Template Error</title></head>" .
+      "<body>Error opening $filename: $!</body></html>"
+    );
   }
 
   my $template = Text::Template->new(
@@ -189,10 +189,10 @@ sub dump_content {
     $content .= '</table>';
   }
   else {
-    $content =
-      ( '<html><head><title>No Response</title></head>' .
-        '<body>This query contained no content.</body></html>'
-      );
+    $content = (
+      '<html><head><title>No Response</title></head>' .
+      '<body>This query contained no content.</body></html>'
+    );
   }
   return $content;
 }
@@ -203,11 +203,11 @@ sub dump_query_as_response {
   my $request = shift;
   my $response = new HTTP::Response(200);
   $response->push_header('Content-Type', 'text/html');
-  $response->content
-    ( "<html><head><title>Content Dump: /signup-do</title></head><body>" .
-      &dump_content($request->content()) .
-      "</body></html>"
-    );
+  $response->content(
+    "<html><head><title>Content Dump: /signup-do</title></head><body>" .
+    &dump_content($request->content()) .
+    "</body></html>"
+  );
   return $response;
 }
 
@@ -227,10 +227,10 @@ sub base64_decode {
 
 # Determine if a checkbox/radio thingy is true.
 
-my %bool =
-  ( 1 => 1, t => 1, y => 1, yes => 1, da => 1, si => 1, on => 1,
-    0 => 0, f => 0, n => 0, no  => 0, nyet => 0, off => 0,
-  );
+my %bool = (
+  1 => 1, t => 1, y => 1, yes => 1, da => 1, si => 1, on => 1,
+  0 => 0, f => 0, n => 0, no  => 0, nyet => 0, off => 0,
+);
 
 sub is_true {
   my $value = shift;

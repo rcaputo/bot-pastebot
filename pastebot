@@ -20,10 +20,11 @@ exit 0;
 
 sub HELP_MESSAGE {
   my $output = shift;
-
   print $output "usage:\n";
-  print $output "  $0             (use pastebot.conf for configuration)\n";
-  print $output "  $0 -f filename (read a particular configuration file)\n";
+  print $output "  $0 -f file.conf (configure and run a pastebot)\n";
+  print $output "\n";
+	print $output "  You can read pastebot's documentation with the\n";
+	print $output "  perldoc command.  Run:  perldoc pastebot\n";
   exit;
 }
 

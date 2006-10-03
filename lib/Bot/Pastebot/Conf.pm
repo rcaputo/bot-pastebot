@@ -99,11 +99,11 @@ unless ( $cfile ) {
 }
 
 unless ( $cfile  and  -f $cfile ) {
-    die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
+  die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
 }
 
 open(MPH, "<$cfile") or
-    die "\nconf error: Cannot open configuration file [$cfile]: $!";
+  die "\nconf error: Cannot open configuration file [$cfile]: $!";
 
 while (<MPH>) {
   chomp;

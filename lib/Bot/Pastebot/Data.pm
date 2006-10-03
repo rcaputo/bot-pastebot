@@ -94,8 +94,7 @@ sub store_paste {
 
   store \%paste_cache, "$dir/Index";
 
-  open BODY, ">", "$dir/$new_id"
-    or warn "I cannot store paste $new_id: $!";
+  open BODY, ">", "$dir/$new_id" or warn "I cannot store paste $new_id: $!";
   binmode(BODY);
   print BODY $paste;
   close BODY;
@@ -138,8 +137,7 @@ sub delete_paste_by_id {
 
   my $dir = pastestore;
 
-  unlink "$dir/$id"
-    or warn "Problem removing paste $id: $!";
+  unlink "$dir/$id" or warn "Problem removing paste $id: $!";
 
   store \%paste_cache, "$dir/Index";
 }
@@ -292,7 +290,9 @@ if (@pastes) {
         _start => sub { $_[KERNEL]->delay( ticks => $conf{'check'} ); },
         ticks => sub {
           for (keys %paste_cache) {
-            next unless (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'};
+            next unless (
+              (time - $paste_cache{$_}->[PASTE_TIME]) > $conf{'expire'}
+            );
             delete_paste_by_id($_);
           }
           $_[KERNEL]->delay( ticks => $conf{'check'} );

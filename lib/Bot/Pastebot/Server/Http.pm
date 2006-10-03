@@ -48,11 +48,12 @@ sub PAGE_FOOTER () {
 # world can see.
 
 sub httpd_session_started {
-  my ( $heap,
-       $socket, $remote_address, $remote_port,
-       $my_name, $my_host, $my_port, $my_ifname, $my_isrv,
-       $proxy, $my_iname, $my_static,
-     ) = @_[HEAP, ARG0..$#_];
+  my (
+    $heap,
+    $socket, $remote_address, $remote_port,
+    $my_name, $my_host, $my_port, $my_ifname, $my_isrv,
+    $proxy, $my_iname, $my_static,
+  ) = @_[HEAP, ARG0..$#_];
 
   # TODO: I think $my_host is obsolete.  Maybe it can be removed, and
   # $my_ifname can be used exclusively?
@@ -86,8 +87,9 @@ sub httpd_session_flushed {
 
 # An HTTPD session received an error.  Stop the session.
 sub httpd_session_got_error {
-  my ($session, $heap, $operation, $errnum, $errstr) =
-    @_[SESSION, HEAP, ARG0, ARG1, ARG2];
+  my ($session, $heap, $operation, $errnum, $errstr) = @_[
+    SESSION, HEAP, ARG0, ARG1, ARG2
+    ];
   warn(
     "connection session ", $session->ID,
     " got $operation error $errnum: $errstr\n"
@@ -522,10 +524,10 @@ foreach my $server (get_names_by_type(WEB_SERVER_TYPE)) {
   my %conf = get_items_by_name($server);
   my %ircconf = get_items_by_name($conf{irc});
 
-	my $static = $conf{static};
-	unless (defined $static) {
-		$static = dist_dir("Bot-Pastebot");
-	}
+  my $static = $conf{static};
+  unless (defined $static) {
+    $static = dist_dir("Bot-Pastebot");
+  }
 
   POE::Component::Server::TCP->new(
     Port     => $conf{port},
@@ -622,8 +624,9 @@ sub fix_paste {
     my $line_number = 0;
     while ($paste =~ m/^/gm) {
       my $pos = pos($paste);
-      substr($paste, pos($paste), 0) =
-        sprintf("\%${line_number_width}d ", ++$line_number);
+      substr($paste, pos($paste), 0) = sprintf(
+        "\%${line_number_width}d ", ++$line_number
+      );
       pos($paste) = $pos + 1;
     }
   }
