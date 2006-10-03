@@ -16,3 +16,4 @@ static/nopaste.gif
 static/paste-answer.html
 static/paste-form.html
 static/paste-lookup.html
+t/01_basic.t
