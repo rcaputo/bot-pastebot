@@ -6,7 +6,7 @@ use strict;
 
 use lib qw(. ./lib);
 
-our $VERSION = 0.50;
+our $VERSION = '0.50';
 
 use File::Basename;
 use Perl::Tidy;
@@ -17,7 +17,17 @@ use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
 use Bot::Pastebot::Server::Http;
 
-Bot::Pastebot::Conf->load();
+my %conf = (
+  Bot::Pastebot::Data->get_conf(),
+  Bot::Pastebot::Client::Irc->get_conf(),
+  Bot::Pastebot::Server::Http->get_conf(),
+);
+
+# Command line options.
+
+my $conf_file = Bot::Pastebot::Conf->get_conf_file();
+Bot::Pastebot::Conf->load($conf_file, \%conf);
+
 Bot::Pastebot::Data->initialize();
 Bot::Pastebot::Client::Irc->initialize();
 Bot::Pastebot::Server::Http->initialize();
@@ -30,8 +40,8 @@ sub HELP_MESSAGE {
   print $output "usage:\n";
   print $output "  $0 -f file.conf (configure and run a pastebot)\n";
   print $output "\n";
-	print $output "  You can read pastebot's documentation with the\n";
-	print $output "  perldoc command.  Run:  perldoc pastebot\n";
+  print $output "  You can read pastebot's documentation with the\n";
+  print $output "  perldoc command.  Run:  perldoc pastebot\n";
   exit;
 }
 

@@ -67,6 +67,32 @@ for my $key (keys %helptext) {
   $helptext{$key} =~ s/\s+$//;
 }
 
+# Return this module's configuration.
+
+use Bot::Pastebot::Conf qw(SCALAR LIST REQUIRED);
+
+my %conf = (
+  irc => {
+    _class        => __PACKAGE__,
+    name          => SCALAR | REQUIRED,
+    server        => LIST   | REQUIRED,
+    nick          => LIST   | REQUIRED,
+    uname         => SCALAR | REQUIRED,
+    iname         => SCALAR | REQUIRED,
+    away          => SCALAR | REQUIRED,
+    flags         => SCALAR,
+    join_cfg_only => SCALAR,
+    channel       => LIST   | REQUIRED,
+    quit          => SCALAR | REQUIRED,
+    cuinfo        => SCALAR | REQUIRED,
+    cver          => SCALAR | REQUIRED,
+    ccinfo        => SCALAR | REQUIRED,
+    localaddr     => SCALAR,
+  },
+);
+
+sub get_conf { return %conf }
+
 #------------------------------------------------------------------------------
 
 sub initialize {

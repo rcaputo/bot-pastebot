@@ -35,6 +35,24 @@ my %paste_cache;
 my %ignores; # $ignores{$ircnet}{lc $channel} = [ mask, mask, ... ];
 my %channels;
 
+# Return this module's configuration.
+
+use Bot::Pastebot::Conf qw(SCALAR REQUIRED);
+
+my %conf = (
+  pastes => {
+    _class    => __PACKAGE__,
+    name      => SCALAR | REQUIRED,
+    check     => SCALAR,
+    expire    => SCALAR,
+    count     => SCALAR,
+    throttle  => SCALAR,
+    store     => SCALAR | REQUIRED,
+  },
+);
+
+sub get_conf { return %conf }
+
 # Return a list of all paste IDs.
 
 sub list_paste_ids {

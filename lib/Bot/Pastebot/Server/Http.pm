@@ -39,6 +39,26 @@ sub PAGE_FOOTER () {
   )
 }
 
+# Return this module's configuration.
+
+use Bot::Pastebot::Conf qw(SCALAR REQUIRED);
+
+my %conf = (
+  web_server => {
+    _class  => __PACKAGE__,
+    name    => SCALAR | REQUIRED,
+    iface   => SCALAR,
+    ifname  => SCALAR,
+    port    => SCALAR | REQUIRED,
+    irc     => SCALAR | REQUIRED,
+    proxy   => SCALAR,
+    iname   => SCALAR,
+    static  => SCALAR,
+  },
+);
+
+sub get_conf { return %conf }
+
 #------------------------------------------------------------------------------
 # A web server.
 

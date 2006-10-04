@@ -6,74 +6,39 @@ package Bot::Pastebot::Conf;
 
 use strict;
 use Carp qw(croak);
-use Getopt::Std;
 
 use base qw(Exporter);
-our @EXPORT_OK = qw( get_names_by_type get_items_by_name load );
+our @EXPORT_OK = qw(
+  get_names_by_type get_items_by_name load
+  SCALAR LIST REQUIRED
+);
 
 sub SCALAR   () { 0x01 }
 sub LIST     () { 0x02 }
 sub REQUIRED () { 0x04 }
 
-my %define = (
-  web_server => {
-    name    => SCALAR | REQUIRED,
-    iface   => SCALAR,
-    ifname  => SCALAR,
-    port    => SCALAR | REQUIRED,
-    irc     => SCALAR | REQUIRED,
-    proxy   => SCALAR,
-    iname   => SCALAR,
-    static  => SCALAR,
-  },
-  irc => {
-    name          => SCALAR | REQUIRED,
-    server        => LIST   | REQUIRED,
-    nick          => LIST   | REQUIRED,
-    uname         => SCALAR | REQUIRED,
-    iname         => SCALAR | REQUIRED,
-    away          => SCALAR | REQUIRED,
-    flags         => SCALAR,
-    join_cfg_only => SCALAR,
-    channel       => LIST   | REQUIRED,
-    quit          => SCALAR | REQUIRED,
-    cuinfo        => SCALAR | REQUIRED,
-    cver          => SCALAR | REQUIRED,
-    ccinfo        => SCALAR | REQUIRED,
-    localaddr     => SCALAR,
-  },
-  pastes => {
-    name      => SCALAR | REQUIRED,
-    check     => SCALAR,
-    expire    => SCALAR,
-    count     => SCALAR,
-    throttle  => SCALAR,
-    store     => SCALAR | REQUIRED,
-  },
-);
-
 my ($section, $section_line, %item, %config);
 
 sub flush_section {
-  my $cfile = shift;
+  my ($conf_file, $conf_definition) = @_;
 
   if (defined $section) {
 
-    foreach my $item_name (sort keys %{$define{$section}}) {
-      my $item_type = $define{$section}->{$item_name};
+    foreach my $item_name (sort keys %{$conf_definition->{$section}}) {
+      my $item_type = $conf_definition->{$section}->{$item_name};
 
       if ($item_type & REQUIRED) {
         die(
           "conf error: section `$section' ",
           "requires item `$item_name' ",
-          "at $cfile line $section_line\n"
+          "at $conf_file line $section_line\n"
         ) unless exists $item{$item_name};
       }
     }
 
     die(
       "conf error: section `$section' ",
-      "item `$item{name}' is redefined at $cfile line $section_line\n"
+      "item `$item{name}' is redefined at $conf_file line $section_line\n"
     ) if exists $config{$item{name}};
 
     my $name = $item{name};
@@ -81,30 +46,46 @@ sub flush_section {
   }
 }
 
-my %opts;
-getopts("f:", \%opts);
-my $cfile = $opts{"f"};
-my $f = "pastebot.conf";
-my @conf  = (
-  "./$f", "$ENV{HOME}/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
-);
+# Parse some configuration.
 
-sub load {
-  unless ( $cfile ) {
-    for my $try ( @conf ) {
-      if ( -f $try ) {
-        $cfile = $try;
-        last;
-      }
+sub get_conf_file {
+  use Getopt::Std;
+
+  my %opts;
+  getopts("f:", \%opts);
+
+  my $conf_file = $opts{"f"};
+  my @conf;
+  if (defined $conf_file) {
+    @conf = ($conf_file);
+  }
+  else {
+    my $f = "pastebot.conf";
+    @conf  = (
+      "./$f", "$ENV{HOME}/$f", "/usr/local/etc/pastebot/$f", "/etc/pastebot/$f"
+    );
+
+    foreach my $try ( @conf ) {
+      next unless -f $try;
+      $conf_file = $try;
+      last;
     }
   }
 
-  unless ( $cfile  and  -f $cfile ) {
-    die "\nconf error: Cannot read configuration file [$cfile], tried: @conf";
+  unless (defined $conf_file and -f $conf_file) {
+    die(
+      "\nconf error: Cannot read configuration file [$conf_file], tried: @conf"
+    );
   }
 
-  open(MPH, "<$cfile") or
-    die "\nconf error: Cannot open configuration file [$cfile]: $!";
+  return $conf_file;
+}
+
+sub load {
+  my ($class, $conf_file, $conf_definition) = @_;
+
+  open(MPH, "<", $conf_file) or
+    die "\nconf error: Cannot open configuration file [$conf_file]: $!";
 
   while (<MPH>) {
     chomp;
@@ -117,24 +98,24 @@ sub load {
       die(
         "conf error: ",
         "can't use an indented item ($1) outside of an unindented section ",
-        "at $cfile line $.\n"
+        "at $conf_file line $.\n"
       ) unless defined $section;
 
       die(
         "conf error: item `$1' does not belong in section `$section' ",
-        "at $cfile line $.\n"
-      ) unless exists $define{$section}->{$1};
+        "at $conf_file line $.\n"
+      ) unless exists $conf_definition->{$section}->{$1};
 
       if (exists $item{$1}) {
         if (ref($item{$1}) eq 'ARRAY') {
           push @{$item{$1}}, $2;
         }
         else {
-          die "conf error: option $1 redefined at $cfile line $.\n";
+          die "conf error: option $1 redefined at $conf_file line $.\n";
         }
       }
       else {
-        if ($define{$section}->{$1} & LIST) {
+        if ($conf_definition->{$section}->{$1} & LIST) {
           $item{$1} = [ $2 ];
         }
         else {
@@ -148,14 +129,14 @@ sub load {
     if (/^(\S+)\s*$/) {
 
       # A new section ends the previous one.
-      flush_section($cfile);
+      flush_section($conf_file, $conf_definition);
 
       $section      = $1;
       $section_line = $.;
       undef %item;
 
       # Pre-initialize any lists in the section.
-      while (my ($item_name, $item_flags) = each %{$define{$section}}) {
+      while (my ($item_name, $item_flags) = each %{$conf_definition->{$section}}) {
         if ($item_flags & LIST) {
           $item{$item_name} = [];
         }
@@ -164,10 +145,10 @@ sub load {
       next;
     }
 
-    die "conf error: syntax error in $cfile at line $.\n";
+    die "conf error: syntax error in $conf_file at line $.\n";
   }
 
-  flush_section($cfile);
+  flush_section($conf_file);
 
   close MPH;
 }
