@@ -27,7 +27,8 @@ WriteMakefile(
     COMPRESS   => 'gzip -9f',
     SUFFIX     => 'gz',
     PREOP      => (
-      'svn-log.perl | tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
+      'svn-log.perl --repo https://thirdlobe.com/svn/pastebot ' .
+      '| tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
     ),
   },
   depend       => { pm_to_blib => 'setup_shared' },
