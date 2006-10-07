@@ -21,6 +21,7 @@ WriteMakefile(
     'POE::Component::IRC' => 5.03,
     'Perl::Tidy'          => 1.46,
     'Test::More'          => 0.63,
+    'Text::Template'      => 1.44,
   },
   EXE_FILES    => [ 'pastebot' ],
   dist         => {
