@@ -436,7 +436,7 @@ sub httpd_session_got_query {
 
   # 2003-12-22 - RC - Added _ and - as legal characters for channel
   # names.  What else?
-  if ($url =~ m,^/([\_\-\w]+)?,) {
+  if ($url =~ m,^/([\-\w]+)?,) {
 
     # set default channel from request URL, if possible
     my $prefchan = $1;
