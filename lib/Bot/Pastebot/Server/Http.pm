@@ -461,12 +461,15 @@ sub httpd_session_got_query {
     } sort @channels;
 
     # Build content.
-
+		
+		my $iname = $heap->{my_iname};
+			$iname .= '/' unless $iname =~ m#/$#;
     my $response = static_response(
       "$heap->{my_static}/paste-form.html",
       { bot_name => $heap->{my_name},
         channels => "@channels",
         footer   => PAGE_FOOTER,
+				iname    => $iname,
       }
     );
     $heap->{wheel}->put($response);

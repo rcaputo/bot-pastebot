@@ -89,7 +89,7 @@ sub load {
 
   while (<MPH>) {
     chomp;
-    s/\s*\#.*$//;
+    s/^(\s*\#.*)$//; #Match comments only at the start of lines
     next if /^\s*$/;
 
     # Section item.
