@@ -214,6 +214,7 @@ A sample:
     channel       pastebot
     channel       perl
     channel       poe
+    channel       \#\#perl
     cuinfo        owned and operated by rcaputo <rcaputo@cpan.org>
     cver          pastebot 1.0 <http://thirdlobe.com/projects/pastebot/>
     flags         +i
@@ -227,6 +228,7 @@ A sample:
     server        irc.freenode.net 6667
     server        irc.freenode.net 7000
     uname         pastebot
+    nickserv_pass password
 
 =over 2
 
@@ -247,7 +249,8 @@ require that clients respond to client information requests.
 Required.  Defines the channel or channels that the pastebot will
 automatically join when it connects to this IRC network.  A pastebot
 may join multiple channels, each defined as a separate "channel"
-entry.
+entry.  The channel prefix '#' may be escaped with a '\' allowing
+the bot to join channels such as ##perl (\#\#perl).
 
 =item cuinfo CTCP_USER_INFO
 
@@ -318,6 +321,13 @@ can connect to one of several servers, each specified on a different
 
 IRC requires clients to send a short "user name" when establishing a
 connection.  This parameter specifies that name.
+
+=item nickserv_pass PASSWORD
+
+Specifies the password to use to identify to the NickServ nickname
+service.  Upon connecting to the irc server, the command
+"/msg NickServ IDENTIFY PASSWORD" will be issued to identify the bot
+to the NickServ service.
 
 =back
 

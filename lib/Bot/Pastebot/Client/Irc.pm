@@ -88,6 +88,7 @@ my %conf = (
     cver          => SCALAR | REQUIRED,
     ccinfo        => SCALAR | REQUIRED,
     localaddr     => SCALAR,
+    nickserv_pass => SCALAR,
   },
 );
 
@@ -365,7 +366,15 @@ sub initialize {
           $irc->yield( away => $conf{away} );
 
           foreach my $channel (@{$conf{channel}}) {
+            $channel =~ s/^#//;
             $kernel->yield( join => "\#$channel" );
+          }
+
+          if (defined $conf{nickserv_pass}) {
+             $irc->yield(
+                privmsg => 'NickServ',
+                "IDENTIFY $conf{nickserv_pass}"
+             );
           }
 
           $heap->{server_index} = 0;

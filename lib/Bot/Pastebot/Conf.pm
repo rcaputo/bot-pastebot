@@ -89,8 +89,10 @@ sub load {
 
   while (<MPH>) {
     chomp;
-    s/^(\s*\#.*)$//; #Match comments only at the start of lines
+    s/\s*(?<!\\)\#.*$//; # remove comments ('#' not preceded by a '\')
     next if /^\s*$/;
+
+    s/\\\#/\#/g; # '\#' -> '#'
 
     # Section item.
     if (/^\s+(\S+)\s+(.*?)\s*$/) {
