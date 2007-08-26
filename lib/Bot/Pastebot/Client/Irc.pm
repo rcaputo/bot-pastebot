@@ -7,7 +7,7 @@ package Bot::Pastebot::Client::Irc;
 use strict;
 
 use POE::Session;
-use POE::Component::IRC;
+use POE::Component::IRC::State;
 
 sub MSG_SPOKEN    () { 0x01 }
 sub MSG_WHISPERED () { 0x02 }
@@ -111,7 +111,7 @@ sub initialize {
     my %conf = get_items_by_name($server);
 
     my $web_alias = $irc_to_web{$server};
-    my $irc = POE::Component::IRC->spawn();
+    my $irc = POE::Component::IRC::State->spawn();
 
     POE::Session->create(
       inline_states => {
@@ -383,7 +383,17 @@ sub initialize {
         announce => sub {
           my ($kernel, $heap, $channel, $message) =
             @_[KERNEL, HEAP, ARG0, ARG1];
-          $irc->yield( privmsg => $channel => $message );
+
+	  my ($nick, $addr) = $message =~ /^"(.*?)" at ([\d\.]+) /;
+
+	  if (my $data = $irc->nick_info ($nick)) {
+	    #TODO: maybe check $addr with $data->{Host} ?
+	    #      instead of the simple nick test below
+	  }
+
+	  if ($irc->is_channel_member( $channel, $nick)) {
+            $irc->yield( privmsg => $channel => $message );
+	  }
         },
 
         irc_ctcp_version => sub {
