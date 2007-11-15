@@ -127,14 +127,15 @@ separate web_server section, and each must have a different name.
 A sample:
 
   web_server
-    iface   10.0.0.80
-    ifname  poe.perl.org
-    iname   http://poe.perl.org:8888/
-    irc     freenode_irc
-    name    freenode_web
-    port    8888
-    proxy   127.0.0.1
-    static  /path/to/static
+    iface    10.0.0.80
+    ifname   poe.perl.org
+    iname    http://poe.perl.org:8888/
+    irc      freenode_irc
+    name     freenode_web
+    port     8888
+    proxy    127.0.0.1
+    static   /path/to/static
+    template Bot::Pastebot::TextTemplate
 
 =over 2
 
@@ -196,6 +197,13 @@ found by running the following Perl command:
 
 If "static" is omitted, the default files will be loaded from that
 directory.
+
+=item template CLASS
+
+Optional.  Defines the class that implements the templating for generated
+pages.  The class must define specific methods, see
+L<Bot::Pastebot::TextTemplate> for which methods and return values are
+expected.
 
 =back
 

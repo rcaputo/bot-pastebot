@@ -45,15 +45,16 @@ use Bot::Pastebot::Conf qw(SCALAR REQUIRED);
 
 my %conf = (
   web_server => {
-    _class  => __PACKAGE__,
-    name    => SCALAR | REQUIRED,
-    iface   => SCALAR,
-    ifname  => SCALAR,
-    port    => SCALAR | REQUIRED,
-    irc     => SCALAR | REQUIRED,
-    proxy   => SCALAR,
-    iname   => SCALAR,
-    static  => SCALAR,
+    _class      => __PACKAGE__,
+    name        => SCALAR | REQUIRED,
+    iface       => SCALAR,
+    ifname      => SCALAR,
+    port        => SCALAR | REQUIRED,
+    irc         => SCALAR | REQUIRED,
+    proxy       => SCALAR,
+    iname       => SCALAR,
+    static      => SCALAR,
+    template    => SCALAR,
   },
 );
 
@@ -72,20 +73,22 @@ sub httpd_session_started {
     $heap,
     $socket, $remote_address, $remote_port,
     $my_name, $my_host, $my_port, $my_ifname, $my_isrv,
-    $proxy, $my_iname, $my_static,
+    $proxy, $my_iname, $my_template, $my_static,
   ) = @_[HEAP, ARG0..$#_];
 
   # TODO: I think $my_host is obsolete.  Maybe it can be removed, and
   # $my_ifname can be used exclusively?
 
-  $heap->{my_host}    = $my_host;
-  $heap->{my_port}    = $my_port;
-  $heap->{my_name}    = $my_name;
-  $heap->{my_inam}    = $my_ifname;
-  $heap->{my_iname}   = $my_iname;
-  $heap->{my_isrv}    = $my_isrv;
-  $heap->{my_proxy}   = $proxy;
-  $heap->{my_static}  = $my_static;
+  $heap->{my_host}     = $my_host;
+  $heap->{my_port}     = $my_port;
+  $heap->{my_name}     = $my_name;
+  $heap->{my_inam}     = $my_ifname;
+  $heap->{my_iname}    = $my_iname;
+  $heap->{my_isrv}     = $my_isrv;
+  $heap->{my_proxy}    = $proxy;
+  $heap->{my_static}   = $my_static;
+  $heap->{my_template} = $my_template;
+
 
   $heap->{remote_addr} = inet_ntoa($remote_address);
   $heap->{remote_port} = $remote_port;
@@ -154,7 +157,9 @@ sub httpd_session_got_query {
   ### Fetch the highlighted style sheet.
 
   if ($url eq '/style') {
-    my $response = static_response( "$heap->{my_static}/highlights.css", { } );
+    my $response = static_response(
+      $heap->{my_template}, "$heap->{my_static}/highlights.css", { }
+    );
     $heap->{wheel}->put( $response );
     return;
   }
@@ -323,6 +328,7 @@ sub httpd_session_got_query {
       $paste = fix_paste($paste, 0, 0, 0, 0);
 
       my $response = static_response(
+        $heap->{my_template},
         "$heap->{my_static}/paste-answer.html",
         { paste_id   => $id,
           error      => $error,
@@ -397,6 +403,7 @@ sub httpd_session_got_query {
       }
       else {
         $response = static_response(
+          $heap->{my_template},
           "$heap->{my_static}/paste-lookup.html",
           { bot_name => $heap->{my_name},
             paste_id => $num,
@@ -468,6 +475,7 @@ sub httpd_session_got_query {
 		my $iname = $heap->{my_iname};
 			$iname .= '/' unless $iname =~ m#/$#;
     my $response = static_response(
+      $heap->{my_template},
       "$heap->{my_static}/paste-form.html",
       { bot_name => $heap->{my_name},
         channels => "@channels",
@@ -556,6 +564,26 @@ sub initialize {
       $static = dist_dir("Bot-Pastebot");
     }
 
+
+    my $template;
+    if (defined $conf{template}) {
+      my $template_class = $conf{template};
+      my $filename       = $template_class;
+      $filename =~ s[::][/]g;
+
+      eval { require "$filename.pm" };
+      die("Unable to load template class '$template_class': $@") if $@;
+
+      $template = $template_class->new();
+      die("Unable to instantiate template object.\n") unless $template;
+
+    } else {
+      require Bot::Pastebot::TextTemplate;
+      $template = Bot::Pastebot::TextTemplate->new()
+        or die("Unable to instantiate default template object.\n");
+    }
+
+
     POE::Component::Server::TCP->new(
       Port     => $conf{port},
       (
@@ -585,7 +613,7 @@ sub initialize {
           args => [
             @_[ARG0..ARG2], $server,
             $conf{iface}, $conf{port}, $conf{ifname}, $conf{irc},
-            $conf{proxy}, $conf{iname}, $static
+            $conf{proxy}, $conf{iname}, $template, $static
           ],
         );
       },

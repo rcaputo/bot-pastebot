@@ -9,7 +9,6 @@ use warnings;
 use strict;
 
 use CGI::Cookie;
-use Text::Template;
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(
@@ -132,14 +131,21 @@ sub parse_cookie {
 
 # Generate a static response from a file.
 sub static_response {
-  my ($filename, $record) = @_;
+  my ($template, $filename, $record) = @_;
   my ($code, $content);
 
-  if (open(FILE, "<$filename")) {
+  if (open(my $template_fh, "<", $filename)) {
     $code = 200;
-    local $/;
-    $content = <FILE>;
-    close FILE;
+    $content = eval { $template->process($template_fh, $record) };
+
+    if ($@ || !defined $content || !length $content) {
+      my $error = $template->error || 'unknown error';
+      $code = 500;
+      $content = (
+        "<html><head><title>Template Error</title></head>" .
+        "<body>Error processing $filename: $error</body></html>"
+      );
+    }
   }
   else {
     $code = 500;
@@ -149,23 +155,6 @@ sub static_response {
     );
   }
 
-  my $template = Text::Template->new(
-    TYPE       => "FILE",
-    SOURCE     => $filename,
-    DELIMITERS => [ "[%", "%]" ],
-  );
-
-  if (defined $template) {
-    $code = 200;
-    $content = $template->fill_in(HASH => $record);
-  }
-  else {
-    $code = 500;
-    $content = (
-      "<html><head><title>Template Error</title></head>" .
-      "<body>Error opening $filename: $!</body></html>"
-    );
-  }
 
   my $response = new HTTP::Response($code);
   $response->push_header('Content-type', 'text/html');

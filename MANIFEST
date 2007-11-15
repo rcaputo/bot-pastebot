@@ -10,6 +10,7 @@ lib/Bot/Pastebot/Conf.pm
 lib/Bot/Pastebot/Data.pm
 lib/Bot/Pastebot/Server/Http.pm
 lib/Bot/Pastebot/WebUtil.pm
+lib/Bot/Pastebot/TextTemplate.pm
 pastebot
 static/highlights.css
 static/nopaste.gif
