@@ -381,6 +381,13 @@ may be disabled if MAX_AGE_SECONDS is zero.  If set, however, pastes
 that are older than MAX_AGE_SECONDS will be purged during a periodic
 expiration check.
 
+=item name NAME
+
+Defines the database's name.  Each database must have a unique name so
+they may be addressed individually.  Database names are not currently
+used, but the configuration parser requires every component to be
+named.
+
 =item store DIRECTORY
 
 Sets the absolute path of the base directory in which pastes will be
@@ -399,9 +406,11 @@ problems you find, either by e-mail or through the project's web site:
 L<http://thirdlobe.com/projects/pastebot>.  We're also interested in
 hearing how you use the Pastebot.
 
+We don't document end-user usage.
+
 =head1 AUTHORS & COPYRIGHT
 
-Pastebot is Copyright (C) 2002-2006 by Rocco Caputo.  All rights are
+Pastebot is Copyright (C) 2002-2008 by Rocco Caputo.  All rights are
 reserved.  Pastebot is free software; you may redistribute and/or
 modify it under the same terms as Perl itself.
 
