@@ -41,7 +41,6 @@ use Bot::Pastebot::Conf qw(SCALAR REQUIRED);
 
 my %conf = (
   pastes => {
-    _class    => __PACKAGE__,
     name      => SCALAR | REQUIRED,
     check     => SCALAR,
     expire    => SCALAR,

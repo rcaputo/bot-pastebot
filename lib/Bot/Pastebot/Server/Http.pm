@@ -45,7 +45,6 @@ use Bot::Pastebot::Conf qw(SCALAR REQUIRED);
 
 my %conf = (
   web_server => {
-    _class      => __PACKAGE__,
     name        => SCALAR | REQUIRED,
     iface       => SCALAR,
     ifname      => SCALAR,
@@ -471,16 +470,16 @@ sub httpd_session_got_query {
     } sort @channels;
 
     # Build content.
-		
-		my $iname = $heap->{my_iname};
-			$iname .= '/' unless $iname =~ m#/$#;
+
+    my $iname = $heap->{my_iname};
+    $iname .= '/' unless $iname =~ m#/$#;
     my $response = static_response(
       $heap->{my_template},
       "$heap->{my_static}/paste-form.html",
       { bot_name => $heap->{my_name},
         channels => "@channels",
         footer   => PAGE_FOOTER,
-				iname    => $iname,
+        iname    => $iname,
       }
     );
     $heap->{wheel}->put($response);
