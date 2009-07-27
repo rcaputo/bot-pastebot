@@ -396,24 +396,22 @@ directories will not be created, however.
 
 =back
 
-=head1 BUGS
+=head1 BUG TRACKER
 
-Pastebot probably has bugs.
+https://rt.cpan.org/Dist/Display.html?Status=Active&Queue=Bot-Pastebot
 
-Pastebot is a rather old project.  It was started in 2002, and it
-hasn't had as much love as it deserves.  Please let us know about any
-problems you find, either by e-mail or through the project's web site:
-L<http://thirdlobe.com/projects/pastebot>.  We're also interested in
-hearing how you use the Pastebot.
+=head1 REPOSITORY
 
-We don't document end-user usage.
+http://thirdlobe.com/svn/pastebot/
+
+=head1 OTHER RESOURCES
+
+http://search.cpan.org/dist/Bot-Pastebot/
 
 =head1 AUTHORS & COPYRIGHT
 
-Pastebot is Copyright (C) 2002-2008 by Rocco Caputo.  All rights are
+Pastebot is Copyright (C) 2002-2009 by Rocco Caputo.  All rights are
 reserved.  Pastebot is free software; you may redistribute and/or
 modify it under the same terms as Perl itself.
-
-Rocco may be reached via <rcaputo+pastebot@cpan.org>.
 
 =cut

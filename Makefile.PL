@@ -23,7 +23,14 @@ WriteMakefile(
     'Test::More'          => 0.63,
     'Text::Template'      => 1.44,
   },
+  LICENSE      => 'perl',
   EXE_FILES    => [ 'pastebot' ],
+  META_ADD     => {
+    resources  => {
+      license    => 'http://dev.perl.org/licenses/',
+      repository => 'http://thirdlobe.com/svn/pastebot/trunk'
+    },
+  },
   dist         => {
     COMPRESS   => 'gzip -9f',
     SUFFIX     => 'gz',
