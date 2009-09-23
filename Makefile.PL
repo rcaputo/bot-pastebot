@@ -1,5 +1,3 @@
-# $Id$
-
 use warnings;
 use strict;
 
@@ -28,15 +26,14 @@ WriteMakefile(
   META_ADD     => {
     resources  => {
       license    => 'http://dev.perl.org/licenses/',
-      repository => 'http://thirdlobe.com/svn/pastebot/trunk'
+      repository => 'http://github.com/~rcaputo/bot-pastebot',
     },
   },
   dist         => {
     COMPRESS   => 'gzip -9f',
     SUFFIX     => 'gz',
     PREOP      => (
-      'svn-log.perl --repo https://thirdlobe.com/svn/pastebot ' .
-      '| tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
+      'git-log.perl | tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
     ),
   },
   depend       => { pm_to_blib => 'setup_shared' },

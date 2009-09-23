@@ -1,12 +1,10 @@
-$Id$
-
 -----
 About
 -----
 
-Pastebot is a web-based dropbox for small texts.  It's a gateway from
-your clipboard to your favorite IRC channel, and hopefully someday
-your favorite chat room.
+Pastebot is perhaps the original web-based dropbox (pastebin) for
+small texts.  It's a gateway from your clipboard to your favorite IRC
+channel, and hopefully someday your favorite chat room.
 
 On the one hand, Pastebot is a web server that accepts "pastes" from
 one person to share with others.  On the other hand, it is an IRC bot
@@ -137,8 +135,18 @@ Here are some common errors and solutions.
 Support
 -------
 
-Support is through Pastebot's tracker at Third Lobe's web site:
-http://thirdlobe.com/projects/pastebot
+The project accepts feature requests and bug reports through its CPAN
+bug queue: https://rt.cpan.org/Dist/Display.html?Queue=Bot-Pastebot
+
+Patches are welcome.  Pastebot's repository is hosted publicly at
+http://github.com/~rcaputo/bot-pastebot and
+http://gitorious.org/bot-pastebot
+
+The latest documentation is readable online:
+http://search.cpan.org/dist/Bot-Pastebot/
+
+A fine bunch of folks occasionally chat about pastebot in
+irc://irc.perl.org/poe
 
 ---
 End

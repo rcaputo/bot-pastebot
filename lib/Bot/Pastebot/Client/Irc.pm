@@ -1,5 +1,3 @@
-# $Id$
-
 # Rocco's IRC bot stuff.
 
 package Bot::Pastebot::Client::Irc;
@@ -601,5 +599,4 @@ sub remove_colors {
   return $msg;
 }
 
-#------------------------------------------------------------------------------
 1;

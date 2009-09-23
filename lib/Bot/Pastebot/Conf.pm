@@ -1,5 +1,3 @@
-# $Id$
-
 # Configuration reading and holding.
 
 package Bot::Pastebot::Conf;

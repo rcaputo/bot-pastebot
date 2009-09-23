@@ -1,5 +1,3 @@
-# $Id$
-
 package Bot::Pastebot::TextTemplate;
 
 use Text::Template;
@@ -48,9 +46,6 @@ sub error {
   return $self->{error};
 }
 
-
-
-
 1;
 
 __END__
@@ -90,14 +85,12 @@ startup, and the resulting object is stored for later process calls.
 This method should simply die if it encounters an error it can't recover
 from.
 
-
 =item $object->process($filehandle, $vars_hashref)
 
 This method is called whenever a template needs to be processed.  The first
 argument is an open filehandle to the template file.  The second argument is
 a hashref of variables specific to the template file being processed, and
 may be empty.  It returns the processed content.
-
 
 =item $object->error
 

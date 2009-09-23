@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id$
 
 use warnings;
 use strict;
@@ -398,15 +397,17 @@ directories will not be created, however.
 
 =head1 BUG TRACKER
 
-https://rt.cpan.org/Dist/Display.html?Status=Active&Queue=Bot-Pastebot
+https://rt.cpan.org/Dist/Display.html?Queue=Bot-Pastebot
 
 =head1 REPOSITORY
 
-http://thirdlobe.com/svn/pastebot/
+http://github.com/~rcaputo/bot-pastebot
+http://gitorious.org/bot-pastebot
 
 =head1 OTHER RESOURCES
 
 http://search.cpan.org/dist/Bot-Pastebot/
+irc://irc.perl.org/poe
 
 =head1 AUTHORS & COPYRIGHT
 

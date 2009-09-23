@@ -1,5 +1,3 @@
-# $Id$
-
 use POE;
 
 use Test::More tests => 5;

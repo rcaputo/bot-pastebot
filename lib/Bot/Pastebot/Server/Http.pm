@@ -1,5 +1,3 @@
-# $Id$
-
 # The web server portion of our program.
 
 package Bot::Pastebot::Server::Http;
@@ -704,5 +702,4 @@ sub fix_paste {
   return $paste;
 }
 
-#------------------------------------------------------------------------------
 1;

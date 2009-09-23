@@ -1,5 +1,3 @@
-# $Id$
-
 # Data management.
 
 package Bot::Pastebot::Data;
