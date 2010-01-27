@@ -15,17 +15,28 @@ use Bot::Pastebot::Conf;
 use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
 use Bot::Pastebot::Server::Http;
+use Bot::Pastebot::Administrivia qw/uses_pidfile get_pid write_pidfile/;
 
 my %conf = (
   Bot::Pastebot::Data->get_conf(),
   Bot::Pastebot::Client::Irc->get_conf(),
   Bot::Pastebot::Server::Http->get_conf(),
+  Bot::Pastebot::Administrivia->get_conf(),
 );
 
 # Command line options.
 
 my $conf_file = Bot::Pastebot::Conf->get_conf_file();
 Bot::Pastebot::Conf->load($conf_file, \%conf);
+
+if (uses_pidfile() && (my $pid = get_pid()) ) {
+  die(
+    "pastebot seems to be running as PID $pid.\n",
+    "Please check if this is the case.\n",
+  );
+} elsif( uses_pidfile() ) {
+  write_pidfile();
+}
 
 Bot::Pastebot::Data->initialize();
 Bot::Pastebot::Client::Irc->initialize();
@@ -116,6 +127,36 @@ That's all.
 Pastebot configuration is broken down into three section types:
 "web_server", "irc", and "pastes".  They define the web server, irc
 network, and paste database that the bot will use.
+
+=head2 Optional Administrivia
+
+These settings make it easier to administrate pastebot. Right now it
+only covers a PID file, but may be expanded upon in the future. This
+entire section is optional, but is global for the bot.
+
+A sample:
+
+  administrivia
+    name  administrivia
+    pidfile /var/run/pastebot.pid
+
+=over 2
+
+=item name
+
+The name for this section. 'administrivia' is simple and clear, but
+it's not limited to this.
+
+=item pidfile
+
+A path, absolute or relative, that will hold a PID for the bot. Upon
+startup, this file will be read and its contents interpreted as a
+PID. If this PID is running, pastebot will exit with a message
+notifying the administrator of this fact. If this PID is not
+running, pastebot will write its own PID to the pidfile before
+continuing.
+
+=back
 
 =head2 Configuring a Web Server
 
