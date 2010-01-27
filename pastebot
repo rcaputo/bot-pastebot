@@ -15,7 +15,7 @@ use Bot::Pastebot::Conf;
 use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
 use Bot::Pastebot::Server::Http;
-use Bot::Pastebot::Administrivia;
+use Bot::Pastebot::Administrivia qw/uses_pidfile get_pid write_pidfile/;
 
 my %conf = (
   Bot::Pastebot::Data->get_conf(),
@@ -29,13 +29,13 @@ my %conf = (
 my $conf_file = Bot::Pastebot::Conf->get_conf_file();
 Bot::Pastebot::Conf->load($conf_file, \%conf);
 
-if (my $pid = Bot::Pastebot::Administrivia::get_pastebot_pid()) {
+if (uses_pidfile && (my $pid = get_pid()) ) {
   die(
-    "pastebot seems to be running already as PID $pid.\n",
+    "pastebot seems to be running as PID $pid.\n",
     "Please check if this is the case.\n",
   );
 } else {
-  Bot::Pastebot::Administrivia::write_pid_file();
+  write_pidfile();
 }
 
 Bot::Pastebot::Data->initialize();
