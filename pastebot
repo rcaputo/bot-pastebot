@@ -15,17 +15,28 @@ use Bot::Pastebot::Conf;
 use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
 use Bot::Pastebot::Server::Http;
+use Bot::Pastebot::Administrivia;
 
 my %conf = (
   Bot::Pastebot::Data->get_conf(),
   Bot::Pastebot::Client::Irc->get_conf(),
   Bot::Pastebot::Server::Http->get_conf(),
+  Bot::Pastebot::Administrivia->get_conf(),
 );
 
 # Command line options.
 
 my $conf_file = Bot::Pastebot::Conf->get_conf_file();
 Bot::Pastebot::Conf->load($conf_file, \%conf);
+
+if (my $pid = Bot::Pastebot::Administrivia::get_pastebot_pid()) {
+  die(
+    "pastebot seems to be running already as PID $pid.\n",
+    "Please check if this is the case.\n",
+  );
+} else {
+  Bot::Pastebot::Administrivia::write_pid_file();
+}
 
 Bot::Pastebot::Data->initialize();
 Bot::Pastebot::Client::Irc->initialize();
