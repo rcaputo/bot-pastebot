@@ -6,6 +6,7 @@ TODO
 examples/pastebot.conf
 lib/Bot/Pastebot/Client/Irc.pm
 lib/Bot/Pastebot/Conf.pm
+lib/Bot/Pastebot/Administrivia.pm
 lib/Bot/Pastebot/Data.pm
 lib/Bot/Pastebot/Server/Http.pm
 lib/Bot/Pastebot/WebUtil.pm
