@@ -33,7 +33,7 @@ WriteMakefile(
     COMPRESS   => 'gzip -9f',
     SUFFIX     => 'gz',
     PREOP      => (
-      'git-log.perl | tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
+      'git-log.pl | tee ./$(DISTNAME)-$(VERSION)/CHANGES > ./CHANGES'
     ),
   },
   depend       => { pm_to_blib => 'setup_shared' },
