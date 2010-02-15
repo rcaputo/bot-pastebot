@@ -5,12 +5,13 @@ use strict;
 
 use lib qw(. ./lib);
 
-our $VERSION = '0.540';
+our $VERSION = '0.541';
 
 use File::Basename;
 use Perl::Tidy;
 
 use POE;
+use Bot::Pastebot;
 use Bot::Pastebot::Conf;
 use Bot::Pastebot::Data;
 use Bot::Pastebot::Client::Irc;
@@ -452,7 +453,7 @@ irc://irc.perl.org/poe
 
 =head1 AUTHORS & COPYRIGHT
 
-Pastebot is Copyright (C) 2002-2009 by Rocco Caputo.  All rights are
+Pastebot is Copyright (C) 2002-2010 by Rocco Caputo.  All rights are
 reserved.  Pastebot is free software; you may redistribute and/or
 modify it under the same terms as Perl itself.
 
