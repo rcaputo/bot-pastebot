@@ -41,7 +41,7 @@ sub get_pid {
   my $name = _get_name();
   my %conf = get_items_by_name($name);
   my $pidfile = $conf{pidfile};
-  return unless -e $pidfile;
+  return unless $pidfile && -e $pidfile;
   my $pid = do {
     local $/;
     open my $fh, '<', $pidfile or die "open($pidfile): $!";
@@ -56,6 +56,7 @@ sub write_pidfile {
   my $name = _get_name();
   my %conf = get_items_by_name($name);
   my $pidfile = $conf{pidfile};
+  return unless $pidfile;
   open my $fh, '>', $pidfile or die "open($pidfile): $!";
   print $fh $$;
   close $fh;
