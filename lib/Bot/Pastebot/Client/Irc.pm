@@ -15,7 +15,7 @@ use Bot::Pastebot::Conf qw( get_names_by_type get_items_by_name );
 use Bot::Pastebot::Data qw(
   clear_channels fetch_paste_channel delete_paste
   clear_channel_ignores set_ignore clear_ignore get_ignores
-  add_channel remove_channel
+  add_channel remove_channel channels
 );
 use Bot::Pastebot::Server::Http;
 
