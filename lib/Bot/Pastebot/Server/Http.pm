@@ -17,7 +17,7 @@ use File::ShareDir qw(dist_dir);
 use Bot::Pastebot::Conf qw( get_names_by_type get_items_by_name );
 use Bot::Pastebot::WebUtil qw(
   static_response parse_content parse_cookie dump_content html_encode
-  is_true cookie
+  is_true cookie redirect
 );
 use Bot::Pastebot::Data qw( channels store_paste fetch_paste is_ignored );
 
@@ -324,18 +324,27 @@ sub httpd_session_got_query {
 
       $paste = fix_paste($paste, 0, 0, 0, 0);
 
-      my $response = static_response(
-        $heap->{my_template},
-        "$heap->{my_static}/paste-answer.html",
-        { paste_id   => $id,
-          error      => $error,
-          paste_link => $paste_link,
-          nick       => $nick,
-          summary    => $summary,
-          paste      => $paste,
-          footer     => PAGE_FOOTER,
-        }
-      );
+      my $response;
+
+      if( $error ) {
+        $response = static_response(
+          $heap->{my_template},
+          "$heap->{my_static}/paste-error.html",
+          {
+            error      => $error,
+            footer     => PAGE_FOOTER,
+          }
+        );
+      } else {
+        $response = redirect(
+          $heap->{my_template},
+          "$heap->{my_static}/paste-answer.html",
+          {
+            paste_id   => $id,
+            paste_link => $paste_link,
+          },
+        );
+      }
 
       if ($channel and $channel =~ /^\#/) {
         $kernel->post(

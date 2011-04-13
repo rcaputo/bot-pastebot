@@ -15,7 +15,7 @@ use base qw(Exporter);
 our @EXPORT_OK = qw(
   url_decode url_encode parse_content parse_cookie static_response
   dump_content dump_query_as_response base64_decode html_encode
-  is_true cookie
+  is_true cookie redirect
 );
 
 #------------------------------------------------------------------------------
@@ -130,40 +130,68 @@ sub parse_cookie {
   return { map url_decode($_), map /([^=]+)=?(.*)/s, split /; ?/, $cookie };
 }
 
-# Generate a static response from a file.
-sub static_response {
+sub _render_template {
   my ($template, $filename, $record) = @_;
-  my ($code, $content);
 
+  my ($content, $error);
   if (open(my $template_fh, "<", $filename)) {
-    $code = 200;
+
     $content = eval { $template->process($template_fh, $record) };
 
     if ($@ || !defined $content || !length $content) {
-      my $error = $template->error || 'unknown error';
-      $code = 500;
+      my $template_error = $template->error || 'unknown error';
+      $error = 1;
       $content = (
         "<html><head><title>Template Error</title></head>" .
-        "<body>Error processing $filename: $error</body></html>"
+        "<body>Error processing $filename: $template_error</body></html>"
       );
     }
-  }
-  else {
-    $code = 500;
+  } else {
+    $error = 1;
     $content = (
       "<html><head><title>Template Error</title></head>" .
       "<body>Error opening $filename: $!</body></html>"
     );
   }
 
+  return +{
+    content => $content,
+    error => 1,
+  };
+}
 
-  my $response = new HTTP::Response($code);
+# Generate a static response from a file.
+sub static_response {
+  my ($template, $filename, $record) = @_;
+
+  my $code = 200;
+  my $result = _render_template( $template, $filename, $record );
+  $code = 500 if $result->{error};
+
+  my $response = HTTP::Response->new($code);
   $response->push_header('Content-type', 'text/html');
-  $response->content($content);
+  $response->content( $result->{content} );
 
   if (wantarray()) {
     return(1, $response);
   }
+  return $response;
+}
+
+# redirect to a paste
+sub redirect {
+  my ($template, $filename, $record, $response_code) = @_;
+
+  my $response = HTTP::Response->new( $response_code || 303 );
+  my $paste_link = $record->{paste_link};
+  $response->push_header( "Location", $paste_link );
+
+  my $result = _render_template( $template, $filename, $record );
+  unless( $result->{error} ) {
+    $response->push_header( "Content-type", "text/html" );
+    $response->content( $result->{content} );
+  }
+
   return $response;
 }
 
