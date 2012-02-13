@@ -168,8 +168,7 @@ sub get_names_by_type {
     push @names, $name;
   }
 
-  return @names if @names;
-  croak "no configuration type matching \"$type\"";
+  return @names;
 }
 
 sub get_items_by_name {
