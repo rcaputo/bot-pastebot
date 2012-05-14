@@ -378,13 +378,13 @@ sub httpd_session_got_query {
 
       ### Make the paste pretty.
 
+      my $store = is_true($query->{store});
       my %flags;
       for my $flag (@flag_names) {
-        $flags{$flag} = exists $query ->{$flag} ? is_true($query ->{$flag}) :
-                        exists $cookie->{$flag} ? is_true($cookie->{$flag}) : 0;
+        $flags{$flag} = $store || exists $query ->{$flag} ? is_true($query ->{$flag}) :
+                                  exists $cookie->{$flag} ? is_true($cookie->{$flag}) : 0;
       }
       my $tx    = is_true($query->{tx});
-      my $store = is_true($query->{store});
 
       my $variants = [
         ['html', 1.000, 'text/html',  undef, 'us-ascii', 'en', undef],
