@@ -384,10 +384,9 @@ sub httpd_session_got_query {
                  exists $cookie->{tidy} ? is_true($cookie->{tidy}) : 0;
       my $hl   = exists $query ->{hl}   ? is_true($query ->{hl})   :
                  exists $cookie->{hl}   ? is_true($cookie->{hl})   : 0;
-      my $tx   = exists $query ->{tx}   ? is_true($query ->{tx})   :
-                 exists $cookie->{tx}   ? is_true($cookie->{tx})   : 0;
       my $wr   = exists $query ->{wr}   ? is_true($query ->{wr})   :
                  exists $cookie->{wr}   ? is_true($cookie->{wr})   : 0;
+      my $tx    = is_true($query->{tx});
       my $store = is_true($query->{store});
 
       my $variants = [
