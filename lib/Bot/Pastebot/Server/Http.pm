@@ -372,20 +372,17 @@ sub httpd_session_got_query {
     my ($nick, $summary, $paste) = fetch_paste($num);
 
     if (defined $paste) {
-
+      my @flag_names = qw(ln tidy hl wr);
       my $cookie = parse_cookie($request->headers->header('Cookie'));
       my $query  = parse_content($params);
 
       ### Make the paste pretty.
 
-      my $ln   = exists $query ->{ln}   ? is_true($query ->{ln})   :
-                 exists $cookie->{ln}   ? is_true($cookie->{ln})   : 0;
-      my $tidy = exists $query ->{tidy} ? is_true($query ->{tidy}) :
-                 exists $cookie->{tidy} ? is_true($cookie->{tidy}) : 0;
-      my $hl   = exists $query ->{hl}   ? is_true($query ->{hl})   :
-                 exists $cookie->{hl}   ? is_true($cookie->{hl})   : 0;
-      my $wr   = exists $query ->{wr}   ? is_true($query ->{wr})   :
-                 exists $cookie->{wr}   ? is_true($cookie->{wr})   : 0;
+      my %flags;
+      for my $flag (@flag_names) {
+        $flags{$flag} = exists $query ->{$flag} ? is_true($query ->{$flag}) :
+                        exists $cookie->{$flag} ? is_true($cookie->{$flag}) : 0;
+      }
       my $tx    = is_true($query->{tx});
       my $store = is_true($query->{store});
 
@@ -396,7 +393,7 @@ sub httpd_session_got_query {
       my $choice = choose($variants, $request);
       $tx = 1 if $choice && $choice eq 'text';
 
-      $paste = fix_paste($paste, $ln, $tidy, $hl, $wr) unless $tx;
+      $paste = fix_paste($paste, @flags{@flag_names}) unless $tx;
 
       # Spew the paste.
 
@@ -416,18 +413,14 @@ sub httpd_session_got_query {
             summary  => $summary,
             paste    => $paste,
             footer   => PAGE_FOOTER,
-            tidy     => ( $tidy ? "checked" : "" ),
-            hl       => ( $hl   ? "checked" : "" ),
-            ln       => ( $ln   ? "checked" : "" ),
-            tx       => ( $tx   ? "checked" : "" ),
-            wr       => ( $wr   ? "checked" : "" ),
+            tx       => ( $tx ? "checked" : "" ),
+            map { $_ => $flags{$_} ? "checked" : "" } @flag_names,
           }
         );
         if ($store) {
-          $response->push_header('Set-Cookie'=>cookie(tidy=>$tidy, $request));
-          $response->push_header('Set-Cookie' => cookie(hl => $hl, $request));
-          $response->push_header('Set-Cookie' => cookie(wr => $wr, $request));
-          $response->push_header('Set-Cookie' => cookie(ln => $ln, $request));
+          for my $flag (@flag_names) {
+            $response->push_header('Set-Cookie' => cookie($flag => $flags{$flag}, $request));
+          }
         }
       }
 
