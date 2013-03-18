@@ -431,7 +431,7 @@ sub httpd_session_got_query {
     }
 
     my $response = HTTP::Response->new(404);
-    $response->push_header( 'Content-type', 'text/html' );
+    $response->push_header( 'Content-type', 'text/html; charset=utf-8' );
     $response->content(
       "<html>" .
       "<head><title>Paste Not Found</title></head>" .
