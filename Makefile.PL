@@ -15,6 +15,7 @@ WriteMakefile(
     'File::ShareDir'      => 0.05,
     'HTTP::Request'       => 1.40,
     'HTTP::Response'      => 1.53,
+		'HTTP::Negotiate'     => 6.00,
     'POE'                 => 1.007,
     'POE::Component::IRC' => 5.03,
     'Perl::Tidy'          => 1.46,
