@@ -133,7 +133,7 @@ sub parse_cookie {
 sub _render_template {
   my ($template, $filename, $record) = @_;
 
-  my ($content, $error);
+  my ($content, $error) = ('', 0);
   if (open(my $template_fh, "<", $filename)) {
 
     $content = eval { $template->process($template_fh, $record) };
@@ -156,7 +156,7 @@ sub _render_template {
 
   return +{
     content => $content,
-    error => 1,
+    error => $error,
   };
 }
 
