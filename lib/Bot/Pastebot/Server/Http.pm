@@ -263,6 +263,7 @@ sub httpd_session_got_query {
       $nick =~ s/\s+/ /g;
       $nick =~ s/^\s+//;
       $nick =~ s/\s+$//;
+      $nick = substr($nick, 0, 30);
       $nick = html_encode($nick);
 
       if (length $nick) {
