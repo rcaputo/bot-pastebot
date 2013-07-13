@@ -259,3 +259,24 @@ sub is_true {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Bot::Pastebot::WebUtil - Web server helper functions.
+
+=head1 DESCRIPTION
+
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
+
+This module contains internal functions used by Bot::Pastebot to
+handle web content.
+
+=head1 BUGS
+
+Some form of this code probably exists in other CPAN modules.
+The rest should probably be distributed separately.
+
+=cut

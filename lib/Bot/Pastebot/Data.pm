@@ -320,3 +320,19 @@ sub initialize {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Bot::Pastebot::Data - Manage pastebot's database.
+
+=head1 DESCRIPTION
+
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
+
+This module contains internal functions to save, recall, and otherwise
+manage Bot::Pastebot data.
+
+=cut

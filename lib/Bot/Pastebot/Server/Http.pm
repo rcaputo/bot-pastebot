@@ -706,3 +706,18 @@ sub fix_paste {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Bot::Pastebot::Server::Http - The part that serves the pastes.
+
+=head1 DESCRIPTION
+
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
+
+This module implements Bot::Pastebot's web pastebin.
+
+=cut

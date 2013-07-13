@@ -63,3 +63,24 @@ sub write_pidfile {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Bot::Pastebot::Administrivia - The part that helps administrators.
+
+=head1 DESCRIPTION
+
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
+
+This module implements PID file management, and it might handle
+daemonization later on.
+
+=head1 BUGS
+
+Some form of this code probably exists in other CPAN modules.
+The rest should probably be distributed separately.
+
+=cut

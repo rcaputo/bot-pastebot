@@ -613,3 +613,19 @@ sub remove_colors {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Bot::Pastebot::Client::Irc - The part that sits on IRC channels.
+
+=head1 DESCRIPTION
+
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
+
+This module implements Bot::Pastebot's IRC-based user interface
+presence.
+
+=cut

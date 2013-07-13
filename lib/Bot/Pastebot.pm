@@ -17,11 +17,11 @@ pastebot -f configfile
 
 =head1 DESCRIPTION
 
-The L<pastebot> command-line program contains full documentation,
-including the syntax and options for pastebot's configuration files.
+See L<pastebot> for the full documentation, including syntax and
+options for pastebot's configuration files.
 
 Pastebot's documentation may be read by running C<perldoc pastebot>.
 
-The Bot::Pastebot module is a placeholder for later refactoring.
+This Bot::Pastebot module is a placeholder for CPAN.
 
 =cut
