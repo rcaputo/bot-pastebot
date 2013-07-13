@@ -75,6 +75,7 @@ my %conf = (
     server        => LIST   | REQUIRED,
     nick          => LIST   | REQUIRED,
     uname         => SCALAR | REQUIRED,
+    server_pass   => SCALAR,
     iname         => SCALAR | REQUIRED,
     away          => SCALAR | REQUIRED,
     flags         => SCALAR,
@@ -85,6 +86,7 @@ my %conf = (
     cver          => SCALAR | REQUIRED,
     ccinfo        => SCALAR | REQUIRED,
     localaddr     => SCALAR,
+    use_ssl       => SCALAR,
     nickserv_pass => SCALAR,
   },
 );
@@ -155,6 +157,8 @@ sub initialize {
               Server    => $chosen_server,
               Port      => $chosen_port,
               Username  => $conf{uname},
+              Password  => $conf{server_pass},
+              UseSSL    => $conf{use_ssl},
               Ircname   => $conf{iname},
               LocalAddr => $conf{localaddr},
             }

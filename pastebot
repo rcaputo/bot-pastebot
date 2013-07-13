@@ -277,6 +277,8 @@ A sample:
     server        irc.freenode.net 6667
     server        irc.freenode.net 7000
     uname         pastebot
+    server_pass   s3krit
+    use_ssl       0
     nickserv_pass password
 
 =over 2
@@ -370,6 +372,15 @@ can connect to one of several servers, each specified on a different
 
 IRC requires clients to send a short "user name" when establishing a
 connection.  This parameter specifies that name.
+
+=item use_ssl BOOLEAN
+
+Optional.  Set this flag to a true value to connect over SSL.
+
+=item server_pass PASSWORD
+
+Optional.  Some IRC servers require a private password to connect.  This
+parameter specifies that password.
 
 =item nickserv_pass PASSWORD
 
