@@ -1,4 +1,5 @@
 # Rocco's IRC bot stuff.
+# vim: expandtab
 
 package Bot::Pastebot::Client::Irc;
 
@@ -83,7 +84,7 @@ my %conf = (
     channel       => LIST   | REQUIRED,
     quit          => SCALAR | REQUIRED,
     cuinfo        => SCALAR | REQUIRED,
-    cver          => SCALAR | REQUIRED,
+    cver          => SCALAR,
     ccinfo        => SCALAR | REQUIRED,
     localaddr     => SCALAR,
     use_ssl       => SCALAR,
@@ -108,6 +109,14 @@ sub initialize {
 
   foreach my $server (get_names_by_type('irc')) {
     my %conf = get_items_by_name($server);
+
+    my $version_string = $conf{cver};
+    unless (defined $version_string and length $version_string) {
+      $version_string = (
+        "Bot::Pastebot $main::VERSION " .
+        "<https://github.com/rcaputo/bot-pastebot>"
+      );
+    }
 
     my $web_alias = $irc_to_web{$server};
     my $irc = POE::Component::IRC::State->spawn();
@@ -402,7 +411,7 @@ sub initialize {
           my ($kernel, $sender) = @_[KERNEL, ARG0];
           my $who = (split /!/, $sender)[0];
           print "ctcp version from $who\n";
-          $irc->yield( ctcpreply => $who, "VERSION $conf{cver}" );
+          $irc->yield( ctcpreply => $who, "VERSION $version_string" );
         },
 
         irc_ctcp_clientinfo => sub {
