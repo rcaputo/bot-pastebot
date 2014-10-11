@@ -352,7 +352,7 @@ Required.  Specifies the bot's nickname on the IRC network.  A bot may
 have multiple nicknames, each specified as a separate configuration
 line.  It will attempt to use them in order, skipping to the next in
 the list as it determines each is already taken.  If every nickname is
-taken, it will append numeric digets to the names and try again.
+taken, it will append numeric digits to the names and try again.
 
 The pastebot will periodically try to reclaim one of the original
 nicknames in its configuration.
