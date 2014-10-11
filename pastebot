@@ -526,6 +526,10 @@ redefined, and where (line 68):
 
 Renaming one of the pbtest sections will resolve the conflict.
 
+=head2 Pastebot is not sending any pastes to IRC
+
+In the web form, you must use a real IRC nick of someone who is on that channel.
+
 =head1 BUG TRACKER
 
 https://rt.cpan.org/Dist/Display.html?Queue=Bot-Pastebot
