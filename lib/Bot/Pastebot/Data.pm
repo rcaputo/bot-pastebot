@@ -291,7 +291,7 @@ sub initialize {
 
   if (-e "$dir/Index") {
     %paste_cache = %{retrieve "$dir/Index"};
-    $id_sequence = (sort keys %paste_cache)[-1];
+    $id_sequence = (sort { $a <=> $b } keys %paste_cache)[-1];
   }
   if (-e "ignorelist") {
     %ignores = %{retrieve 'ignorelist'};
