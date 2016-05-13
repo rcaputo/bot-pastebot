@@ -649,7 +649,7 @@ sub fix_paste {
   ### If the code is to be highlighted, then highlight it.
 
   if ($highlighted) {
-    my @html_args = qw( -q -html -pre );
+    my @html_args = qw( -q -html -pre -enc=utf8);
     push @html_args, "-nnn" if $line_nums;
 
     my $highlighted = "";
